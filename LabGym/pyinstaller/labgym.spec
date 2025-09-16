@@ -4,9 +4,8 @@ from PyInstaller.utils.hooks import collect_submodules, collect_dynamic_libs
 
 APP_NAME  = "LabGym"
 BUNDLE_ID = "yelab.LabGym"
-ICON      = os.path.join("LabGym", "assets", "icons", "labgym.icns")  # <— uses your existing icon
+ICON      = os.path.join("LabGym", "assets", "icons", "labgym.icns")
 
-# If you don't need TF/detectron2 at runtime, remove them to shrink size.
 hiddenimports, binaries = [], []
 for mod in ["torch", "torchvision", "detectron2", "tensorflow"]:
     try: hiddenimports += collect_submodules(mod)
@@ -14,13 +13,22 @@ for mod in ["torch", "torchvision", "detectron2", "tensorflow"]:
     try: binaries += collect_dynamic_libs(mod)
     except Exception: pass
 
-datas = []
+# Include LabGym’s subpackages explicitly (helps analysis)
+try:
+    hiddenimports += collect_submodules("LabGym")
+except Exception:
+    pass
+
+# If your app needs assets at runtime, include them (safe for PoC)
+datas = [
+    ("LabGym/assets", "LabGym/assets"),
+]
 if os.path.exists("logging.yaml"):
     datas.append(("logging.yaml", "LabGym"))
 
 a = Analysis(
-    ['myapp.py'],
-    pathex=['pyinstaller'],
+    ['LabGym/__main__.py'],   # <-- use your actual package entry
+    pathex=['.'],             # <-- repo root so 'LabGym' resolves
     binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,
@@ -33,8 +41,8 @@ pyz = PYZ(a.pure, a.zipped_data)
 exe = EXE(
     pyz, a.scripts, a.binaries, a.zipfiles, a.datas,
     name=APP_NAME,
-    icon=ICON,        # <— macOS wants .icns
-    console=False,    # windowed
+    icon=ICON,
+    console=False,
 )
 
 app = BUNDLE(
