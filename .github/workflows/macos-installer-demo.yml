@@ -51,31 +51,31 @@ jobs:
           ls -al dist
 
       - name: Package to DMG
-          run: |
-            mkdir -p "${DMG_OUTDIR}"
-            DMG="${DMG_OUTDIR}/${APP_NAME}-macOS-arm64.dmg"
-            APP_PATH="dist/${APP_NAME}.app"
+        run: |
+          mkdir -p "${DMG_OUTDIR}"
+          DMG="${DMG_OUTDIR}/${APP_NAME}-macOS-arm64.dmg"
+          APP_PATH="dist/${APP_NAME}.app"
 
-            if [ -f "${ICON_BG_PNG}" ]; then
-              create-dmg \
-                --volname "${APP_NAME}" \
-                --window-size 540 380 \
-                --background "${ICON_BG_PNG}" \
-                --icon "${APP_NAME}.app" 140 170 \
-                --app-drop-link 400 170 \
-                "${DMG}" \
-                "${APP_PATH}"
-            else
-              create-dmg \
-                --volname "${APP_NAME}" \
-                --window-size 540 380 \
-                --icon "${APP_NAME}.app" 140 170 \
-                --app-drop-link 400 170 \
-                "${DMG}" \
-                "${APP_PATH}"
-            fi
+          if [ -f "${ICON_BG_PNG}" ]; then
+            create-dmg \
+              --volname "${APP_NAME}" \
+              --window-size 540 380 \
+              --background "${ICON_BG_PNG}" \
+              --icon "${APP_NAME}.app" 140 170 \
+              --app-drop-link 400 170 \
+              "${DMG}" \
+              "${APP_PATH}"
+          else
+            create-dmg \
+              --volname "${APP_NAME}" \
+              --window-size 540 380 \
+              --icon "${APP_NAME}.app" 140 170 \
+              --app-drop-link 400 170 \
+              "${DMG}" \
+              "${APP_PATH}"
+          fi
 
-            echo "DMG created at ${DMG}"
+          echo "DMG created at ${DMG}"
 
       - name: Upload DMG artifact
         uses: actions/upload-artifact@v4
