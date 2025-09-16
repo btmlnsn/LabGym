@@ -16,7 +16,7 @@ jobs:
       PYTHON_VERSION: "3.10"
       APP_NAME: "LabGym"
       DMG_OUTDIR: "out"
-      SPEC_PATH: "pyinstaller/labgym.spec"
+      SPEC_PATH: "LabGym/pyinstaller/labgym.spec"
       ICON_BG_PNG: "LabGym/assets/icons/labgym.png"   # used if present for DMG bg
     steps:
       - name: Checkout
