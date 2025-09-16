@@ -37,6 +37,7 @@ sphinxcontrib-htmlhelp==2.0.4
 sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==1.0.6
 sphinxcontrib-serializinghtml==1.1.9
+tomli>=2.0.1
 tornado==6.4; python_version > "2.7"
 urllib3==2.1.0
 zipp==3.17.0; python_version < "3.10"

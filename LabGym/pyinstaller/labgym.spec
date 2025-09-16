@@ -2,10 +2,10 @@
 import os
 from PyInstaller.utils.hooks import collect_submodules, collect_dynamic_libs
 
-# Use the workflow's CWD (repo root) instead of __file__
-ROOT    = os.path.abspath(os.getcwd())         # repo root
+# Use the workflow's CWD (repo root)
+ROOT    = os.path.abspath(os.getcwd())
 PKG_DIR = os.path.join(ROOT, "LabGym")
-SPEC_DIR = os.path.join(PKG_DIR, "pyinstaller")  # optional; may be useful later
+SPEC_DIR = os.path.join(PKG_DIR, "pyinstaller")
 
 APP_NAME  = "LabGym"
 BUNDLE_ID = "yelab.LabGym"
@@ -13,16 +13,23 @@ ICON      = os.path.join(PKG_DIR, "assets", "icons", "labgym.icns")
 
 hiddenimports, binaries = [], []
 for mod in ["torch", "torchvision", "detectron2", "tensorflow"]:
-    try: hiddenimports += collect_submodules(mod)
-    except Exception: pass
-    try: binaries += collect_dynamic_libs(mod)
-    except Exception: pass
+    try:
+        hiddenimports += collect_submodules(mod)
+    except Exception:
+        pass
+    try:
+        binaries += collect_dynamic_libs(mod)
+    except Exception:
+        pass
 
 # Pull in your own package and assets
 try:
     hiddenimports += collect_submodules("LabGym")
 except Exception:
     pass
+
+# >>> ADD THIS so PyInstaller bundles the Py3.10 fallback <<<
+hiddenimports += ["tomli"]
 
 datas = [
     (os.path.join(PKG_DIR, "assets"), "LabGym/assets"),
@@ -31,8 +38,8 @@ if os.path.exists(os.path.join(ROOT, "logging.yaml")):
     datas.append((os.path.join(ROOT, "logging.yaml"), "LabGym"))
 
 a = Analysis(
-    [os.path.join(PKG_DIR, "__main__.py")],   # <-- absolute to repo root
-    pathex=[ROOT],                             # <-- make 'LabGym' importable during analysis
+    [os.path.join(PKG_DIR, "__main__.py")],
+    pathex=[ROOT],
     binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,
