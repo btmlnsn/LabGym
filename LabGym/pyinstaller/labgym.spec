@@ -19,8 +19,8 @@ if os.path.exists("logging.yaml"):
     datas.append(("logging.yaml", "LabGym"))
 
 a = Analysis(
-    ['pyinstaller/myapp.py'],
-    pathex=['.'],
+    ['myapp.py'],
+    pathex=['pyinstaller'],
     binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,
