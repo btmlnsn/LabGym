@@ -2,9 +2,14 @@
 import os
 from PyInstaller.utils.hooks import collect_submodules, collect_dynamic_libs
 
+# Resolve paths relative to this spec file
+SPEC_DIR = os.path.dirname(__file__)
+ROOT     = os.path.abspath(os.path.join(SPEC_DIR, ".."))     # repo root
+PKG_DIR  = os.path.join(ROOT, "LabGym")
+
 APP_NAME  = "LabGym"
 BUNDLE_ID = "yelab.LabGym"
-ICON      = os.path.join("LabGym", "assets", "icons", "labgym.icns")
+ICON      = os.path.join(PKG_DIR, "assets", "icons", "labgym.icns")
 
 hiddenimports, binaries = [], []
 for mod in ["torch", "torchvision", "detectron2", "tensorflow"]:
@@ -13,26 +18,25 @@ for mod in ["torch", "torchvision", "detectron2", "tensorflow"]:
     try: binaries += collect_dynamic_libs(mod)
     except Exception: pass
 
-# Include LabGym’s subpackages explicitly (helps analysis)
+# Pull in your own package and assets
 try:
     hiddenimports += collect_submodules("LabGym")
 except Exception:
     pass
 
-# If your app needs assets at runtime, include them (safe for PoC)
 datas = [
-    ("LabGym/assets", "LabGym/assets"),
+    (os.path.join(PKG_DIR, "assets"), "LabGym/assets"),
 ]
-if os.path.exists("logging.yaml"):
-    datas.append(("logging.yaml", "LabGym"))
+if os.path.exists(os.path.join(ROOT, "logging.yaml")):
+    datas.append((os.path.join(ROOT, "logging.yaml"), "LabGym"))
 
 a = Analysis(
-    ['LabGym/__main__.py'],   # <-- use your actual package entry
-    pathex=['.'],             # <-- repo root so 'LabGym' resolves
+    [os.path.join(PKG_DIR, "__main__.py")],   # <-- absolute to repo root
+    pathex=[ROOT],                             # <-- make 'LabGym' importable during analysis
     binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,
-    hookspath=[os.path.join('pyinstaller','hooks')],
+    hookspath=[os.path.join(SPEC_DIR, "hooks")],
     noarchive=False,
 )
 
