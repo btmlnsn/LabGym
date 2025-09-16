@@ -2,10 +2,10 @@
 import os
 from PyInstaller.utils.hooks import collect_submodules, collect_dynamic_libs
 
-# Resolve paths relative to this spec file
-SPEC_DIR = os.path.dirname(__file__)
-ROOT     = os.path.abspath(os.path.join(SPEC_DIR, ".."))     # repo root
-PKG_DIR  = os.path.join(ROOT, "LabGym")
+# Use the workflow's CWD (repo root) instead of __file__
+ROOT    = os.path.abspath(os.getcwd())         # repo root
+PKG_DIR = os.path.join(ROOT, "LabGym")
+SPEC_DIR = os.path.join(PKG_DIR, "pyinstaller")  # optional; may be useful later
 
 APP_NAME  = "LabGym"
 BUNDLE_ID = "yelab.LabGym"
