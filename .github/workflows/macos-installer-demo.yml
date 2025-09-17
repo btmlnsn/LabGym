@@ -1,4 +1,4 @@
-name: Build macOS Installer (Deterministic, PyInstaller)
+name: Build macOS Installer (PyInstaller)
 
 on:
   push:
@@ -9,14 +9,12 @@ permissions:
   contents: read
 
 env:
-  # Mirrors nox smoke-test behavior
-  PIP_PREFER_BINARY: "1"      # prefer wheels over building from source
-  PIP_NO_BUILD_ISOLATION: "1" # avoid surprise isolated builds
-  # Keep cache enabled for speed; disable ONLY if need fresh wheels every run
+  PIP_PREFER_BINARY: "1"
+  PIP_NO_BUILD_ISOLATION: "1"
 
 jobs:
   build-arm64:
-    name: ARM64 .app + DMG (GitHub-hosted)
+    name: ARM64 .app + DMG
     runs-on: macos-14
     env:
       PYTHON_VERSION: "3.10"
@@ -24,21 +22,24 @@ jobs:
       SPEC_PATH: "LabGym/pyinstaller/labgym.spec"
       DMG_OUTDIR: "out"
       ICON_BG_PNG: "LabGym/assets/icons/labgym.png"
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           check-latest: true
 
-      - name: Show Python info
+      - name: Validate repo structure & inputs
         run: |
-          which python
-          python -V
+          set -euo pipefail
+          echo "PWD: $(pwd)"
+          test -f "${SPEC_PATH}" || { echo "Missing ${SPEC_PATH}"; exit 1; }
+          test -f "LabGym/__main__.py" || { echo "Missing LabGym/__main__.py"; exit 1; }
+          test -f "LabGym/assets/icons/labgym.icns" || { echo "Missing LabGym/assets/icons/labgym.icns"; exit 1; }
+          test -f "docs/requirements-build.txt" || { echo "Missing docs/requirements-build.txt"; exit 1; }
 
       - name: Cache pip
         uses: actions/cache@v4
@@ -48,56 +49,37 @@ jobs:
           restore-keys: |
             pip-${{ runner.os }}-${{ env.PYTHON_VERSION }}-
 
-      - name: Install build/runtime deps (prefer wheels)
+      - name: Install deps (prefer wheels)
         run: |
+          set -euo pipefail
           python -m pip install --upgrade pip wheel
-          # Runtime deps for your package (torch, wx, etc.)
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          # Build-time deps (PyInstaller); create-dmg via brew
           pip install -r docs/requirements-build.txt
-          # Guarantee the Py3.10 TOML fallback is present in the env
           pip install tomli
-          # Optional: install your package (helps import sanity checks)
           pip install -e .
-          # DMG tool
           brew list create-dmg >/dev/null 2>&1 || brew install create-dmg
 
-      - name: Sanity import check (catch guarded imports like tomli)
+      - name: Sanity import check
         run: |
+          set -euo pipefail
           python - <<'PY'
-          import sys
           try:
               import tomllib
           except ModuleNotFoundError:
               import tomli
           import LabGym
-          print("Sanity imports OK on", sys.version)
+          print("Sanity imports OK")
           PY
 
       - name: Build .app with PyInstaller
         run: |
+          set -euo pipefail
           rm -rf build dist
           pyinstaller --clean --noconfirm "${SPEC_PATH}" | tee pyinstaller.log
-          echo "dist/ contents:"; ls -al dist || true
+          echo "Contents of dist/:"
+          ls -al dist || true
 
-      - name: Verify tomli bundled (peek into PYZ/base_library.zip)
-        run: |
-          APP="dist/${APP_NAME}.app"
-          found="false"
-          for z in "$APP/Contents/MacOS"/PYZ-*.pyz "$APP/Contents/MacOS"/base_library.zip; do
-            [ -f "$z" ] || continue
-            python - <<PY "$z"
-import sys, zipfile
-z=sys.argv[1]
-with zipfile.ZipFile(z) as f:
-    names = [n for n in f.namelist() if n.startswith("tomli")]
-    print(z, "->", bool(names), names[:5])
-PY
-            found="true"
-          done
-          [ "$found" = "true" ] || echo "No PYZ/base_library.zip found (PyInstaller layout differs)"
-
-      - name: Upload PyInstaller logs (warn file + build log)
+      - name: Upload PyInstaller logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -109,6 +91,7 @@ PY
 
       - name: Package to DMG
         run: |
+          set -euo pipefail
           mkdir -p "${DMG_OUTDIR}"
           DMG="${DMG_OUTDIR}/${APP_NAME}-macOS-arm64.dmg"
           APP_PATH="dist/${APP_NAME}.app"
