@@ -1,4 +1,4 @@
-name: Build macOS Installer (PyInstaller Demo)
+name: Build macOS Installer (Deterministic, PyInstaller)
 
 on:
   push:
@@ -8,6 +8,12 @@ on:
 permissions:
   contents: read
 
+env:
+  # Mirrors nox smoke-test behavior
+  PIP_PREFER_BINARY: "1"      # prefer wheels over building from source
+  PIP_NO_BUILD_ISOLATION: "1" # avoid surprise isolated builds
+  # Keep cache enabled for speed; disable ONLY if need fresh wheels every run
+
 jobs:
   build-arm64:
     name: ARM64 .app + DMG (GitHub-hosted)
@@ -15,18 +21,24 @@ jobs:
     env:
       PYTHON_VERSION: "3.10"
       APP_NAME: "LabGym"
-      DMG_OUTDIR: "out"
       SPEC_PATH: "LabGym/pyinstaller/labgym.spec"
-      ICON_BG_PNG: "LabGym/assets/icons/labgym.png"   # used if present for DMG bg
+      DMG_OUTDIR: "out"
+      ICON_BG_PNG: "LabGym/assets/icons/labgym.png"
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.10 (latest available)
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           check-latest: true
+
+      - name: Show Python info
+        run: |
+          which python
+          python -V
 
       - name: Cache pip
         uses: actions/cache@v4
@@ -36,26 +48,70 @@ jobs:
           restore-keys: |
             pip-${{ runner.os }}-${{ env.PYTHON_VERSION }}-
 
-      - name: Install dependencies
+      - name: Install build/runtime deps (prefer wheels)
         run: |
           python -m pip install --upgrade pip wheel
+          # Runtime deps for your package (torch, wx, etc.)
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          # Build-time deps (PyInstaller); create-dmg via brew
           pip install -r docs/requirements-build.txt
-          # also install Homebrew create-dmg for the well-known CLI (safe if already present)
-          brew install create-dmg || true
+          # Guarantee the Py3.10 TOML fallback is present in the env
+          pip install tomli
+          # Optional: install your package (helps import sanity checks)
+          pip install -e .
+          # DMG tool
+          brew list create-dmg >/dev/null 2>&1 || brew install create-dmg
+
+      - name: Sanity import check (catch guarded imports like tomli)
+        run: |
+          python - <<'PY'
+          import sys
+          try:
+              import tomllib
+          except ModuleNotFoundError:
+              import tomli
+          import LabGym
+          print("Sanity imports OK on", sys.version)
+          PY
 
       - name: Build .app with PyInstaller
         run: |
-          pyinstaller --clean --noconfirm "${SPEC_PATH}"
-          echo "Contents of dist/:"
-          ls -al dist
+          rm -rf build dist
+          pyinstaller --clean --noconfirm "${SPEC_PATH}" | tee pyinstaller.log
+          echo "dist/ contents:"; ls -al dist || true
+
+      - name: Verify tomli bundled (peek into PYZ/base_library.zip)
+        run: |
+          APP="dist/${APP_NAME}.app"
+          found="false"
+          for z in "$APP/Contents/MacOS"/PYZ-*.pyz "$APP/Contents/MacOS"/base_library.zip; do
+            [ -f "$z" ] || continue
+            python - <<PY "$z"
+import sys, zipfile
+z=sys.argv[1]
+with zipfile.ZipFile(z) as f:
+    names = [n for n in f.namelist() if n.startswith("tomli")]
+    print(z, "->", bool(names), names[:5])
+PY
+            found="true"
+          done
+          [ "$found" = "true" ] || echo "No PYZ/base_library.zip found (PyInstaller layout differs)"
+
+      - name: Upload PyInstaller logs (warn file + build log)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pyinstaller-logs
+          path: |
+            pyinstaller.log
+            build/**/warn-*.txt
+          if-no-files-found: ignore
 
       - name: Package to DMG
         run: |
           mkdir -p "${DMG_OUTDIR}"
           DMG="${DMG_OUTDIR}/${APP_NAME}-macOS-arm64.dmg"
           APP_PATH="dist/${APP_NAME}.app"
-
           if [ -f "${ICON_BG_PNG}" ]; then
             create-dmg \
               --volname "${APP_NAME}" \
@@ -74,10 +130,9 @@ jobs:
               "${DMG}" \
               "${APP_PATH}"
           fi
-
           echo "DMG created at ${DMG}"
 
-      - name: Upload DMG artifact
+      - name: Upload DMG
         uses: actions/upload-artifact@v4
         with:
           name: LabGym-macOS-arm64
