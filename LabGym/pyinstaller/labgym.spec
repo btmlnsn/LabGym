@@ -28,8 +28,10 @@ try:
 except Exception:
     pass
 
-# >>> ADD THIS so PyInstaller bundles the Py3.10 fallback <<<
-hiddenimports += ["tomli"]
+try:
+    hiddenimports += collect_submodules("tomli")
+except Exception:
+    hiddenimports += ["tomli"]
 
 datas = [
     (os.path.join(PKG_DIR, "assets"), "LabGym/assets"),
