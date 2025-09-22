@@ -92,14 +92,14 @@ jobs:
             build/**/warn-*.txt
           if-no-files-found: ignore
 
-      - name: Verify detectron2 sources are present on disk
+      - name: Verify detectron2 sources are present
         run: |
           set -euo pipefail
           APP="dist/${APP_NAME}.app"
-          # In onedir macOS bundles, Python files live under Contents/MacOS/
           CANDIDATES=(
             "$APP/Contents/MacOS/LabGym/detectron2/modeling/box_regression.py"
-            "$APP/Contents/MacOS/LabGym/detectron2/modeling/meta_arch/rcnn.py"
+            "$APP/Contents/Resources/LabGym/detectron2/modeling/box_regression.py"
+            "dist/${APP_NAME}/LabGym/detectron2/modeling/box_regression.py"
           )
           ok=0
           for p in "${CANDIDATES[@]}"; do
@@ -109,10 +109,11 @@ jobs:
             fi
           done
           if [ "$ok" -ne 1 ]; then
-            echo "Detectron2 sources not found as loose files."
-            echo "Check that noarchive=True and datas copy are applied."
+            echo "Detectron2 sources not found as real files on disk."
+            echo "Check pyinstaller.log; ensure noarchive=True and datas copy are applied."
             exit 1
           fi
+
 
       - name: Package to DMG
         run: |
