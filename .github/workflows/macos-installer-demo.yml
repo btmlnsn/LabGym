@@ -49,12 +49,11 @@ jobs:
           restore-keys: |
             pip-${{ runner.os }}-${{ env.PYTHON_VERSION }}-
 
-      - name: Install deps (prefer wheels)
+      - name: Install build tooling (pin PyInstaller)
         run: |
           set -euo pipefail
           python -m pip install --upgrade pip wheel
-          # Pin build tools so module_collection_mode & noarchive behavior are consistent
-          python -m pip install "pyinstaller>=6.9" "pyinstaller-hooks-contrib>=2024.8"
+          pip install "pyinstaller>=6.10,<6.11" pyinstaller-hooks-contrib
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install -r docs/requirements-build.txt
           pip install tomli
@@ -66,20 +65,22 @@ jobs:
           set -euo pipefail
           python - <<'PY'
           try:
-              import tomllib
+              import tomllib  # py311+
           except ModuleNotFoundError:
-              import tomli
+              import tomli    # py310 fallback bundled in app
           import LabGym
           print("Sanity imports OK")
           PY
 
-      - name: Build .app with PyInstaller
+      - name: Build .app with PyInstaller (onedir, real sources)
         run: |
           set -euo pipefail
           rm -rf build dist
           pyinstaller --clean --noconfirm "${SPEC_PATH}" | tee pyinstaller.log
           echo "Contents of dist/:"
           ls -al dist || true
+          echo "Inspect .app layout:"
+          find "dist/${APP_NAME}.app" -maxdepth 3 -type d -print | sed 's/^/  /' || true
 
       - name: Upload PyInstaller logs
         if: always()
@@ -91,16 +92,27 @@ jobs:
             build/**/warn-*.txt
           if-no-files-found: ignore
 
-      - name: Verify detectron2 sources are present
+      - name: Verify detectron2 sources are present on disk
         run: |
           set -euo pipefail
-          echo "Searching for detectron2 sources under dist/…"
-          if ! /usr/bin/find dist -type f -name "box_regression.py" -path "*detectron2/*" | tee /dev/stderr | grep -q "box_regression.py"; then
-            echo "Detectron2 sources not found as real files on disk."
-            echo "Check pyinstaller.log; ensure noarchive=True and datas copy are applied."
+          APP="dist/${APP_NAME}.app"
+          # In onedir macOS bundles, Python files live under Contents/MacOS/
+          CANDIDATES=(
+            "$APP/Contents/MacOS/LabGym/detectron2/modeling/box_regression.py"
+            "$APP/Contents/MacOS/LabGym/detectron2/modeling/meta_arch/rcnn.py"
+          )
+          ok=0
+          for p in "${CANDIDATES[@]}"; do
+            if [ -f "$p" ]; then
+              echo "Found source: $p"
+              ok=1
+            fi
+          done
+          if [ "$ok" -ne 1 ]; then
+            echo "Detectron2 sources not found as loose files."
+            echo "Check that noarchive=True and datas copy are applied."
             exit 1
           fi
-          echo "Detectron2 sources present."
 
       - name: Package to DMG
         run: |

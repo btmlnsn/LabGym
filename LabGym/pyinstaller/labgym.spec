@@ -13,7 +13,7 @@ ICON      = os.path.join(PKG_DIR, "assets", "icons", "labgym.icns")
 hiddenimports = []
 binaries = []
 
-# Collect torch & torchvision binaries + submodules (keep Torch fully available)
+# Torch + torchvision: submodules and native libs
 for mod in ("torch", "torchvision"):
     try:
         hiddenimports += collect_submodules(mod)
@@ -24,7 +24,7 @@ for mod in ("torch", "torchvision"):
     except Exception:
         pass
 
-# If you also import upstream detectron2 at runtime, include it too
+# If upstream detectron2 is imported anywhere, include it too
 for mod in ("detectron2",):
     try:
         hiddenimports += collect_submodules(mod)
@@ -41,44 +41,44 @@ try:
 except Exception:
     pass
 
-# tomli for py<3.11 (your logging/config tries tomllib then tomli)
+# tomli for py<3.11 fallback (your logging uses tomllib/tomli)
 try:
     hiddenimports += collect_submodules("tomli")
 except Exception:
     hiddenimports += ["tomli"]
 
-# Data files
 datas = [
     (os.path.join(PKG_DIR, "assets"), "LabGym/assets"),
 ]
+
 log_cfg = os.path.join(ROOT, "logging.yaml")
 if os.path.exists(log_cfg):
     datas.append((log_cfg, "LabGym"))
 
-# Ship vendored detectron2 sources as real files (TorchScript needs them)
+# Ship vendored detectron2 sources as *real files* (TorchScript needs them).
 D2_VENDOR = os.path.join(PKG_DIR, "detectron2")
 if os.path.isdir(D2_VENDOR):
     datas.append((D2_VENDOR, "LabGym/detectron2"))
 
 a = Analysis(
-    # Keep the real entry point — no env hacks; Torch remains enabled
     [os.path.join(PKG_DIR, "__main__.py")],
     pathex=[ROOT],
     binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,
     hookspath=[os.path.join(SPEC_DIR, "hooks")],
-    # Ensure source .py files are written to disk for modules TorchScript inspects
+    # Ensure .py sources are written to disk, not just into a .pyz
+    noarchive=True,
+    # Also force PyInstaller to emit .py files for these modules
     module_collection_mode={
         "LabGym.detectron2": "pyz+py",
-        "detectron2": "pyz+py",  # safe if you import upstream detectron2 too
+        "detectron2": "pyz+py",   # harmless if not present
     },
-    # Guarantee pure-Python modules are available as real files (not only in the PYZ)
-    noarchive=True,
 )
 
 pyz = PYZ(a.pure, a.zipped_data)
 
+# Build an onedir bundle (loose files), not a one-file stub.
 exe = EXE(
     pyz, a.scripts, a.binaries, a.zipfiles, a.datas,
     name=APP_NAME,
@@ -86,8 +86,20 @@ exe = EXE(
     console=False,
 )
 
-app = BUNDLE(
+# Gather into a folder
+coll = COLLECT(
     exe,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+    strip=False,
+    upx=False,
+    name=APP_NAME,
+)
+
+# Wrap the folder into a proper macOS .app bundle
+app = BUNDLE(
+    coll,
     name=f"{APP_NAME}.app",
     bundle_identifier=BUNDLE_ID,
     info_plist={
