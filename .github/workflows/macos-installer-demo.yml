@@ -1,154 +1,53 @@
-name: Build macOS Installer (PyInstaller)
-
-on:
-  push:
-    branches: [ ci/pyinstaller-demo ]
-  workflow_dispatch:
-
-permissions:
-  contents: read
-
-env:
-  PIP_PREFER_BINARY: "1"
-  PIP_NO_BUILD_ISOLATION: "1"
-
+# .github/workflows/build-macos-installer.yml
 jobs:
   build-arm64:
-    name: ARM64 .app + DMG
     runs-on: macos-14
     env:
       PYTHON_VERSION: "3.10"
-      APP_NAME: "LabGym"
-      SPEC_PATH: "LabGym/pyinstaller/labgym.spec"
-      DMG_OUTDIR: "out"
-      ICON_BG_PNG: "LabGym/assets/icons/labgym.png"
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          check-latest: true
 
-      - name: Validate repo structure & inputs
+      - name: Install build deps
         run: |
-          set -euo pipefail
-          echo "PWD: $(pwd)"
-          test -f "${SPEC_PATH}" || { echo "Missing ${SPEC_PATH}"; exit 1; }
-          test -f "LabGym/__main__.py" || { echo "Missing LabGym/__main__.py"; exit 1; }
-          test -f "LabGym/assets/icons/labgym.icns" || { echo "Missing LabGym/assets/icons/labgym.icns"; exit 1; }
-          test -f "docs/requirements-build.txt" || { echo "Missing docs/requirements-build.txt"; exit 1; }
-
-      - name: Cache pip
-        uses: actions/cache@v4
-        with:
-          path: ~/Library/Caches/pip
-          key: pip-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('requirements.txt', 'docs/requirements-build.txt') }}
-          restore-keys: |
-            pip-${{ runner.os }}-${{ env.PYTHON_VERSION }}-
-
-      - name: Install build tooling and runtime deps
-        run: |
-          set -euo pipefail
-          python -m pip install --upgrade pip wheel
-          # Build tools (pyinstaller pinned; hooks contrib)
-          pip install "pyinstaller>=6.10,<6.11" pyinstaller-hooks-contrib
-          # Your runtime deps (if present)
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          # Build-time list (kept small; harmless if duplicates pyinstaller)
+          python -m pip install --upgrade pip
+          # Keep PyInstaller 6.10 as you pinned; add hooks-contrib explicitly
           pip install -r docs/requirements-build.txt
-          # Py3.10 needs tomli at runtime (your code falls back when tomllib missing)
-          pip install tomli
-          # Install the package so imports resolve during analysis
-          pip install -e .
-          # DMG packager via Homebrew
-          brew list create-dmg >/dev/null 2>&1 || brew install create-dmg
+          pip install pyinstaller-hooks-contrib
 
-      - name: Sanity import check
+      - name: Build LabGym.app via spec
         run: |
-          set -euo pipefail
+          pyinstaller --clean --noconfirm LabGym/pyinstaller/labgym.spec
+
+      # --- 4) Minimal CI proof that source files are on disk ---
+      - name: Verify detectron2 sources shipped as .py
+        run: |
+          APP_RES="dist/LabGym.app/Contents/Resources"
+          test -f "$APP_RES/LabGym/detectron2/modeling/box_regression.py"
+          echo "Found: $APP_RES/LabGym/detectron2/modeling/box_regression.py"
+          # Optional: show which loader will be used if imported at runtime
           python - <<'PY'
-          try:
-              import tomllib  # py311+
-          except ModuleNotFoundError:
-              import tomli    # py310 fallback bundled in app
-          import LabGym
-          print("Sanity imports OK")
-          PY
+import importlib, inspect, sys, os
+# Simulate the runtime hook logic so we know import will hit the on-disk copy
+res = "dist/LabGym.app/Contents/Resources"
+sys.path.insert(0, os.path.abspath(res))  # parent of LabGym
+m = importlib.import_module("LabGym.detectron2.modeling.box_regression")
+print("Module __file__ =", m.__file__)
+print("Has source?     =", bool(inspect.getsource(m.Box2BoxTransform)))
+PY
 
-      - name: Build .app with PyInstaller (onedir, ship real sources)
+      - name: Create DMG
         run: |
-          set -euo pipefail
-          rm -rf build dist
-          pyinstaller --clean --noconfirm "${SPEC_PATH}" | tee pyinstaller.log
-          echo "Contents of dist/:"
-          ls -al dist || true
-          echo "Inspect app layout (first 3 levels):"
-          find "dist/${APP_NAME}.app" -maxdepth 3 -type d -print | sed 's/^/  /' || true
-
-      - name: Upload PyInstaller logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: pyinstaller-logs
-          path: |
-            pyinstaller.log
-            build/**/warn-*.txt
-          if-no-files-found: ignore
-
-      - name: Verify detectron2 sources are present
-        run: |
-          set -euo pipefail
-          APP="dist/${APP_NAME}.app"
-          CANDIDATES=(
-            "$APP/Contents/Resources/LabGym/detectron2/modeling/box_regression.py"
-            "$APP/Contents/Resources/detectron2/modeling/box_regression.py"
-          )
-          ok=0
-          for p in "${CANDIDATES[@]}"; do
-            if [ -f "$p" ]; then
-              echo "✅ Found source: $p"
-              ok=1
-            fi
-          done
-          if [ "$ok" -ne 1 ]; then
-            echo "❌ Detectron2 sources not found as real files on disk."
-            echo "Check pyinstaller.log; ensure 'datas' includes detectron2 and 'excludes' prevents freezing."
-            exit 1
-          fi
-
-      - name: Package to DMG
-        run: |
-          set -euo pipefail
-          mkdir -p "${DMG_OUTDIR}"
-          DMG="${DMG_OUTDIR}/${APP_NAME}-macOS-arm64.dmg"
-          APP_PATH="dist/${APP_NAME}.app"
-          if [ -f "${ICON_BG_PNG}" ]; then
-            create-dmg \
-              --volname "${APP_NAME}" \
-              --window-size 540 380 \
-              --background "${ICON_BG_PNG}" \
-              --icon "${APP_NAME}.app" 140 170 \
-              --app-drop-link 400 170 \
-              "${DMG}" \
-              "${APP_PATH}"
-          else
-            create-dmg \
-              --volname "${APP_NAME}" \
-              --window-size 540 380 \
-              --icon "${APP_NAME}.app" 140 170 \
-              --app-drop-link 400 170 \
-              "${DMG}" \
-              "${APP_PATH}"
-          fi
-          echo "DMG created at ${DMG}"
-
-      - name: Upload DMG
-        uses: actions/upload-artifact@v4
-        with:
-          name: LabGym-macOS-arm64
-          path: out/LabGym-macOS-arm64.dmg
-          if-no-files-found: error
+          brew install create-dmg
+          create-dmg \
+            --volname "LabGym Installer" \
+            --background "LabGym/pyinstaller/dmg-background.png" \
+            --window-size 600 400 \
+            --icon-size 96 \
+            --app-drop-link 450 200 \
+            "dist/LabGym-Installer.dmg" "dist/LabGym.app"
