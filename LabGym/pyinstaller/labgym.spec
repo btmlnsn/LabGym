@@ -1,32 +1,20 @@
 # -*- mode: python ; coding: utf-8 -*-
 import os
-from glob import glob
-from PyInstaller.utils.hooks import (
-    collect_submodules,
-    collect_dynamic_libs,
-    collect_data_files,
-)
+from PyInstaller.utils.hooks import collect_submodules, collect_dynamic_libs
 
-# Resolve paths from repo root (runner CWD)
-ROOT      = os.path.abspath(os.getcwd())
-PKG_DIR   = os.path.join(ROOT, "LabGym")
-HOOKS_DIR = os.path.join(PKG_DIR, "pyinstaller", "hooks")
+# Use repo root as CWD on CI and locally
+ROOT    = os.path.abspath(os.getcwd())
+PKG_DIR = os.path.join(ROOT, "LabGym")
+SPEC_DIR = os.path.join(PKG_DIR, "pyinstaller")
 
 APP_NAME  = "LabGym"
 BUNDLE_ID = "yelab.LabGym"
 ICON      = os.path.join(PKG_DIR, "assets", "icons", "labgym.icns")
 
-# ---------------- Hidden imports / binaries ----------------
 hiddenimports, binaries = [], []
 
-# Your package (belt & suspenders)
-try:
-    hiddenimports += collect_submodules("LabGym")
-except Exception:
-    pass
-
-# Vendor ML stacks (safe to try even if not present)
-for mod in ["torch", "torchvision"]:
+# Big libs that use dynamic import / native libs
+for mod in ["torch", "torchvision", "detectron2", "tensorflow"]:
     try:
         hiddenimports += collect_submodules(mod)
     except Exception:
@@ -36,57 +24,49 @@ for mod in ["torch", "torchvision"]:
     except Exception:
         pass
 
-# Common detectron2 deps that are sometimes imported dynamically
-for mod in ["fvcore", "iopath", "yacs"]:
-    try:
-        hiddenimports += collect_submodules(mod)
-    except Exception:
-        pass
+# Your package
+try:
+    hiddenimports += collect_submodules("LabGym")
+except Exception:
+    pass
 
-# Py3.10 TOML fallback (your code uses tomli when tomllib is missing)
+# Ensure tomli is included when running on Python < 3.11
 try:
     hiddenimports += collect_submodules("tomli")
 except Exception:
     hiddenimports += ["tomli"]
 
-# ---------------- Data files ----------------
+# ---- Datas ---------------------------------------------------------------
 datas = [
+    # app assets
     (os.path.join(PKG_DIR, "assets"), "LabGym/assets"),
 ]
 
-# Logging config if present at repo root
-if os.path.exists(os.path.join(ROOT, "logging.yaml")):
-    datas.append((os.path.join(ROOT, "logging.yaml"), "LabGym"))
+# ship logging.yaml if present
+log_cfg = os.path.join(ROOT, "logging.yaml")
+if os.path.exists(log_cfg):
+    datas.append((log_cfg, "LabGym"))
 
-# Include any top-level YAML/TOML in LabGym/ used at runtime
-for y in glob(os.path.join(PKG_DIR, "*.y*ml")):
-    datas.append((y, "LabGym"))
-for t in glob(os.path.join(PKG_DIR, "*.toml")):
-    datas.append((t, "LabGym"))
-
-# 🔑 Ship LabGym.detectron2 as real .py sources (not frozen/zipped)
-#    This makes TorchScript/JIT happy when it calls inspect.getsource().
-datas += collect_data_files("LabGym.detectron2", include_py_files=True)
-
-# Only pass hookspath if the folder exists
-hookspath = [HOOKS_DIR] if os.path.isdir(HOOKS_DIR) else []
-
-# ---------------- Build graph ----------------
-# Prefer collecting LabGym.detectron2 as source files:
-MODULE_COLLECTION_MODE = {
-    # Put all submodules of LabGym.detectron2 on disk as .py files
-    "LabGym.detectron2": "py",
-}
+# *** CRUCIAL ***
+# Ship the vendored detectron2 sources as real files so TorchScript can read them
+D2_SRC = os.path.join(PKG_DIR, "detectron2")
+if os.path.isdir(D2_SRC):
+    datas.append((D2_SRC, "LabGym/detectron2"))
 
 a = Analysis(
-    [os.path.join(PKG_DIR, "__main__.py")],  # entry script
-    pathex=[ROOT],
+    [os.path.join(PKG_DIR, "__main__.py")],
+    pathex=[ROOT],                 # make "LabGym" importable
     binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,
-    hookspath=hookspath,
+    hookspath=[os.path.join(SPEC_DIR, "hooks")],
+    # keep .py *and* .pyz for vendored detectron2 so sources exist at runtime
+    module_collection_mode={
+        "LabGym.detectron2": "pyz+py",
+        # If you also import upstream detectron2 from pip/conda anywhere, uncomment:
+        # "detectron2": "pyz+py",
+    },
     noarchive=False,
-    module_collection_mode=MODULE_COLLECTION_MODE,
 )
 
 pyz = PYZ(a.pure, a.zipped_data)
@@ -94,11 +74,9 @@ pyz = PYZ(a.pure, a.zipped_data)
 exe = EXE(
     pyz, a.scripts, a.binaries, a.zipfiles, a.datas,
     name=APP_NAME,
-    icon=ICON,
-    console=False,  # windowed app
+    icon=ICON if os.path.exists(ICON) else None,
+    console=False,  # change to True if you want a console during local debugging
 )
-
-GIT_SHA = os.getenv("GITHUB_SHA", "dev")[:7]
 
 app = BUNDLE(
     exe,
@@ -109,7 +87,7 @@ app = BUNDLE(
         "CFBundleDisplayName": APP_NAME,
         "CFBundleIdentifier": BUNDLE_ID,
         "CFBundleShortVersionString": "0.1.0",
-        "CFBundleVersion": f"0.1.0+{GIT_SHA}",
+        "CFBundleVersion": "0.1.0",
         "LSMinimumSystemVersion": "12.0",
         "NSHighResolutionCapable": True,
     },
