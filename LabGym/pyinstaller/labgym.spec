@@ -1,84 +1,65 @@
-# LabGym/pyinstaller/labgym.spec
-# Python 3.10 only
+# LabGym/pyinstaller/labgym.spec  (Python 3.10)
 
-import os
 from pathlib import Path
+import os
+
 from PyInstaller.building.build_main import Analysis, PYZ, EXE, BUNDLE
 from PyInstaller.utils.hooks import collect_submodules
 
-# Use CWD as repo root (Actions invokes pyinstaller from repo root)
+# ---- Path setup (PyInstaller runs spec without __file__) ----
 project_root = Path.cwd()
 labgym_root = project_root / 'LabGym'
 assert labgym_root.exists(), f"Expected {labgym_root} to exist; run PyInstaller from repo root."
-
 pathex = [str(project_root)]
 
-# Absolute entry script path (prevents doubled path issue)
+# ---- Entry script (absolute) ----
 entry_script = labgym_root / 'pyinstaller' / 'myapp.py'
 assert entry_script.exists(), f"Entry script not found: {entry_script}"
 
-# --- Ship vendored detectron2 as real .py files on disk ---
+# ---- Vendored detectron2 paths ----
 vendored_detectron2 = labgym_root / 'detectron2'
 assert vendored_detectron2.exists(), f"Vendored detectron2 not found at: {vendored_detectron2}"
 
-def walk_as_datas(src_dir: Path, dest_prefix: str):
-    """Return list of (src, dest) tuples for all files under src_dir."""
-    out = []
-    src_dir = src_dir.resolve()
-    for root, _, files in os.walk(src_dir):
-        root_p = Path(root)
-        for fn in files:
-            src = root_p / fn
-            rel = src.relative_to(src_dir)  # path inside the package
-            dest = Path(dest_prefix) / rel
-            out.append((str(src), str(dest)))
-    return out
-
-datas = []
-# copy all vendored detectron2 files to Resources/LabGym/detectron2/...
-datas += walk_as_datas(vendored_detectron2, 'LabGym/detectron2')
-
-# include logging.yaml if present (adjust if your path differs)
+# ---- Optional logging.yaml if you ship it ----
 log_yaml = labgym_root / 'logging.yaml'
-if log_yaml.exists():
-    datas.append((str(log_yaml), 'LabGym'))
+has_log_yaml = log_yaml.exists()
 
-# Optional app icon
-icon_file = labgym_root / 'pyinstaller' / 'sunflower.png'
-icon_arg = str(icon_file) if icon_file.exists() else None
+# ---- Runtime hook to prefer on-disk sources (we updated this earlier) ----
+runtime_hook = labgym_root / 'pyinstaller' / 'rthook_detectron2_source.py'
+assert runtime_hook.exists(), f"Missing runtime hook: {runtime_hook}"
 
-# Runtime hook ensures imports prefer on-disk sources, not FrozenImporter
-runtime_hooks = [str(labgym_root / 'pyinstaller' / 'rthook_detectron2_source.py')]
-assert Path(runtime_hooks[0]).exists(), f"Missing runtime hook: {runtime_hooks[0]}"
-
-# Keep hiddenimports minimal; avoid importing vendored detectron2 at spec time
+# ---- Hidden imports kept minimal (avoid importing vendored pkg at spec time) ----
 hiddenimports = [
     'torch',
     'torchvision',
     'tomli',
 ]
 
-# Prefer torchvision as .py too (avoids occasional inspect/JIT edge cases)
+# ---- Prefer torchvision as .py too (helps inspect/JIT sometimes) ----
 module_collection_mode = {
     'torchvision': 'py',
-    # If external 'detectron2' ever appears in deps, you can also force:
+    # If any external 'detectron2' sneaks in via deps, you can also force:
     # 'detectron2': 'py',
 }
 
+# ---- Build graph ----
 a = Analysis(
     scripts=[str(entry_script)],
     pathex=pathex,
     binaries=[],
-    datas=datas,
+    datas=[],                       # <- leave empty here; we’ll place files via BUNDLE.resources
     hiddenimports=hiddenimports,
     hookspath=[],
-    runtime_hooks=runtime_hooks,
-    excludes=[],
-    noarchive=True,                # keep modules unpacked (no PYZ zip archive)
+    runtime_hooks=[str(runtime_hook)],
+    excludes=['detectron2'],        # ensure only vendored is used
+    noarchive=True,                 # keep modules unpacked (helps inspect.getsource)
     module_collection_mode=module_collection_mode,
 )
 
 pyz = PYZ(a.pure)
+
+icon_file = labgym_root / 'pyinstaller' / 'sunflower.png'
+icon_arg = str(icon_file) if icon_file.exists() else None
 
 exe = EXE(
     pyz,
@@ -91,9 +72,17 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=False,
-    console=False,                 # windowed app
+    console=False,
     icon=icon_arg,
 )
+
+# ---- Put vendored sources *inside* .app/Contents/Resources ----
+bundle_resources = [
+    # Copy the entire vendored detectron2 tree into Resources/LabGym/detectron2
+    (str(vendored_detectron2), 'LabGym/detectron2'),
+]
+if has_log_yaml:
+    bundle_resources.append((str(log_yaml), 'LabGym'))
 
 app = BUNDLE(
     exe,
@@ -101,4 +90,5 @@ app = BUNDLE(
     bundle_identifier='yelab.LabGym',
     icon=icon_arg,
     info_plist={'NSHighResolutionCapable': True},
+    resources=bundle_resources,     # <—— KEY: ensure physical files inside Resources
 )

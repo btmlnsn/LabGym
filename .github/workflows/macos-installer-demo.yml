@@ -45,9 +45,9 @@ jobs:
           ls -la "${GITHUB_WORKSPACE}/dist" || true
 
           found=""
-          path1="${APP}/Contents/MacOS/LabGym/detectron2/modeling/box_regression.py"
-          path2="${APP}/Contents/Resources/LabGym/detectron2/modeling/box_regression.py"
-          path3="${SIDECAR}/LabGym/detectron2/modeling/box_regression.py"
+          path1="${APP}/Contents/Resources/LabGym/detectron2/modeling/box_regression.py"  # BUNDLE(resources)
+          path2="${APP}/Contents/MacOS/LabGym/detectron2/modeling/box_regression.py"      # fallback if MacOS layout
+          path3="${SIDECAR}/LabGym/detectron2/modeling/box_regression.py"                 # sidecar fallback
 
           for p in "$path1" "$path2" "$path3"; do
             if [ -f "$p" ]; then
@@ -58,31 +58,29 @@ jobs:
           done
 
           if [ -z "$found" ]; then
-            echo "box_regression.py not found in expected locations. Tree for debugging:"
+            echo "box_regression.py not found in expected locations. Trees for debugging:"
+            echo "-- Contents --"
             find "${APP}/Contents" -maxdepth 6 -type f -name 'box_regression.py' -print || true
+            echo "-- Sidecar --"
             find "${SIDECAR}" -maxdepth 6 -type f -name 'box_regression.py' -print || true
             exit 1
           fi
 
-          echo "== Smoke test: import + inspect (mimics TorchScript need) =="
+          echo "== Smoke test: import + inspect =="
           /usr/bin/python3 - <<'PY'
           import sys, os, importlib, inspect
-          base_candidates = [
-            os.path.abspath("dist/LabGym.app/Contents/MacOS"),
+          cands = [
             os.path.abspath("dist/LabGym.app/Contents/Resources"),
+            os.path.abspath("dist/LabGym.app/Contents/MacOS"),
             os.path.abspath("dist/LabGym"),
           ]
-          for base in base_candidates:
+          for base in cands:
               labgym = os.path.join(base, "LabGym")
               if os.path.isdir(labgym):
                   sys.path.insert(0, base)
-          try:
-              m = importlib.import_module("LabGym.detectron2.modeling.box_regression")
-              print("Loaded from:", m.__file__)
-              src = inspect.getsource(m.Box2BoxTransform)
-              print("Source length:", len(src.splitlines()))
-          except Exception as e:
-              raise SystemExit(f"Import/inspect failed: {e}")
+          m = importlib.import_module("LabGym.detectron2.modeling.box_regression")
+          print("Loaded from:", m.__file__)
+          print("Source lines on Box2BoxTransform:", len(inspect.getsource(m.Box2BoxTransform).splitlines()))
           PY
 
       - name: Create DMG
