@@ -39,26 +39,26 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          APP_RES="dist/LabGym.app/Contents/Resources"
+          APP_MACOS="dist/LabGym.app/Contents/MacOS"
 
-          echo "Contents under $APP_RES (top-level):"
-          ls -la "$APP_RES" || true
+          echo "Contents under $APP_MACOS (top-level):"
+          ls -la "$APP_MACOS" || true
 
-          echo "Looking for box_regression.py..."
-          if [ ! -f "$APP_RES/LabGym/detectron2/modeling/box_regression.py" ]; then
+          echo "Looking for box_regression.py under MacOS/LabGym/detectron2/..."
+          if [ ! -f "$APP_MACOS/LabGym/detectron2/modeling/box_regression.py" ]; then
             echo "Did not find expected file; showing a shallow tree to help debug:"
-            find "$APP_RES" -maxdepth 4 -type f -name 'box_regression.py' -print || true
-            find "$APP_RES" -maxdepth 3 -type d -print | sed 's|^|DIR: |'
+            find "$APP_MACOS" -maxdepth 5 -type f -name 'box_regression.py' -print || true
+            find "$APP_MACOS" -maxdepth 3 -type d -print | sed 's|^|DIR: |'
             exit 1
           fi
 
-          echo "Found: $APP_RES/LabGym/detectron2/modeling/box_regression.py"
+          echo "Found: $APP_MACOS/LabGym/detectron2/modeling/box_regression.py"
 
-          echo "Smoke test: import module from on-disk Resources and inspect source..."
+          echo "Smoke test: import module from on-disk bundle and inspect source..."
           /usr/bin/python3 - <<'PY'
           import sys, os, importlib, inspect
-          res = os.path.abspath("dist/LabGym.app/Contents/Resources")
-          sys.path.insert(0, res)  # make Resources/LabGym importable
+          macos = os.path.abspath("dist/LabGym.app/Contents/MacOS")
+          sys.path.insert(0, macos)  # make MacOS/LabGym importable
           m = importlib.import_module("LabGym.detectron2.modeling.box_regression")
           print("Loaded from:", m.__file__)
           print("Source lines on Box2BoxTransform:", len(inspect.getsource(m.Box2BoxTransform).splitlines()))
