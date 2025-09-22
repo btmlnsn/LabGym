@@ -35,19 +35,33 @@ jobs:
 
       # --- 4) Minimal CI proof that source files are on disk ---
       - name: Verify detectron2 sources shipped as .py
+        working-directory: ${{ github.workspace }}
+        shell: bash
         run: |
+          set -euo pipefail
           APP_RES="dist/LabGym.app/Contents/Resources"
-          test -f "$APP_RES/LabGym/detectron2/modeling/box_regression.py"
+
+          echo "Contents under $APP_RES (top-level):"
+          ls -la "$APP_RES" || true
+
+          echo "Looking for box_regression.py..."
+          if [ ! -f "$APP_RES/LabGym/detectron2/modeling/box_regression.py" ]; then
+            echo "Did not find expected file; showing a shallow tree to help debug:"
+            find "$APP_RES" -maxdepth 4 -type f -name 'box_regression.py' -print || true
+            find "$APP_RES" -maxdepth 3 -type d -print | sed 's|^|DIR: |'
+            exit 1
+          fi
+
           echo "Found: $APP_RES/LabGym/detectron2/modeling/box_regression.py"
-          # Optional: show which loader will be used if imported at runtime
-          python - <<'PY'
-          import importlib, inspect, sys, os
-          # Simulate the runtime hook logic so we know import will hit the on-disk copy
-          res = "dist/LabGym.app/Contents/Resources"
-          sys.path.insert(0, os.path.abspath(res))  # parent of LabGym
+
+          echo "Smoke test: import module from on-disk Resources and inspect source..."
+          /usr/bin/python3 - <<'PY'
+          import sys, os, importlib, inspect
+          res = os.path.abspath("dist/LabGym.app/Contents/Resources")
+          sys.path.insert(0, res)  # make Resources/LabGym importable
           m = importlib.import_module("LabGym.detectron2.modeling.box_regression")
-          print("Module __file__ =", m.__file__)
-          print("Has source?     =", bool(inspect.getsource(m.Box2BoxTransform)))
+          print("Loaded from:", m.__file__)
+          print("Source lines on Box2BoxTransform:", len(inspect.getsource(m.Box2BoxTransform).splitlines()))
           PY
 
       - name: Create DMG
