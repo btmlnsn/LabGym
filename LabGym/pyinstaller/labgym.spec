@@ -2,19 +2,19 @@
 import os
 from PyInstaller.utils.hooks import collect_submodules, collect_dynamic_libs
 
-# Use repo root as CWD on CI and locally
-ROOT    = os.path.abspath(os.getcwd())
-PKG_DIR = os.path.join(ROOT, "LabGym")
+ROOT     = os.path.abspath(os.getcwd())
+PKG_DIR  = os.path.join(ROOT, "LabGym")
 SPEC_DIR = os.path.join(PKG_DIR, "pyinstaller")
 
 APP_NAME  = "LabGym"
 BUNDLE_ID = "yelab.LabGym"
 ICON      = os.path.join(PKG_DIR, "assets", "icons", "labgym.icns")
 
-hiddenimports, binaries = [], []
+hiddenimports = []
+binaries = []
 
-# Big libs that use dynamic import / native libs
-for mod in ["torch", "torchvision", "detectron2", "tensorflow"]:
+# Collect torch & torchvision binaries + submodules
+for mod in ("torch", "torchvision"):
     try:
         hiddenimports += collect_submodules(mod)
     except Exception:
@@ -24,47 +24,57 @@ for mod in ["torch", "torchvision", "detectron2", "tensorflow"]:
     except Exception:
         pass
 
-# Your package
+# If you import upstream detectron2 as well, include it too
+for mod in ("detectron2",):
+    try:
+        hiddenimports += collect_submodules(mod)
+    except Exception:
+        pass
+    try:
+        binaries += collect_dynamic_libs(mod)
+    except Exception:
+        pass
+
+# Your own package
 try:
     hiddenimports += collect_submodules("LabGym")
 except Exception:
     pass
 
-# Ensure tomli is included when running on Python < 3.11
+# tomli for py<3.11 (your mylogging/config uses tomllib/tomli)
 try:
     hiddenimports += collect_submodules("tomli")
 except Exception:
     hiddenimports += ["tomli"]
 
-# ---- Datas ---------------------------------------------------------------
 datas = [
-    # app assets
     (os.path.join(PKG_DIR, "assets"), "LabGym/assets"),
 ]
 
-# ship logging.yaml if present
 log_cfg = os.path.join(ROOT, "logging.yaml")
 if os.path.exists(log_cfg):
     datas.append((log_cfg, "LabGym"))
 
-# *** CRUCIAL ***
-# Ship the vendored detectron2 sources as real files so TorchScript can read them
-D2_SRC = os.path.join(PKG_DIR, "detectron2")
-if os.path.isdir(D2_SRC):
-    datas.append((D2_SRC, "LabGym/detectron2"))
+# IMPORTANT: ship vendored detectron2 sources as real files
+# (TorchScript needs them at runtime)
+D2_VENDOR = os.path.join(PKG_DIR, "detectron2")
+if os.path.isdir(D2_VENDOR):
+    datas.append((D2_VENDOR, "LabGym/detectron2"))
 
 a = Analysis(
+    # keep your real entry point — no env hacks (Torch stays ON)
     [os.path.join(PKG_DIR, "__main__.py")],
-    pathex=[ROOT],                 # make "LabGym" importable
+    pathex=[ROOT],
     binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,
     hookspath=[os.path.join(SPEC_DIR, "hooks")],
-    # keep .py *and* .pyz for vendored detectron2 so sources exist at runtime
+    # Force PyInstaller to *also* write .py files on disk
+    #   for the modules that TorchScript inspects.
+    # Your app uses the vendored detectron2; include upstream if used.
     module_collection_mode={
         "LabGym.detectron2": "pyz+py",
-        # If you also import upstream detectron2 from pip/conda anywhere, uncomment:
-        # "detectron2": "pyz+py",
+        "detectron2": "pyz+py",        # keep if you import upstream too
     },
     noarchive=False,
 )
@@ -75,7 +85,7 @@ exe = EXE(
     pyz, a.scripts, a.binaries, a.zipfiles, a.datas,
     name=APP_NAME,
     icon=ICON if os.path.exists(ICON) else None,
-    console=False,  # change to True if you want a console during local debugging
+    console=False,
 )
 
 app = BUNDLE(
