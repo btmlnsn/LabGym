@@ -39,43 +39,29 @@ jobs:
         run: |
           set -euo pipefail
           APP="${GITHUB_WORKSPACE}/dist/LabGym.app"
-          SIDECAR="${GITHUB_WORKSPACE}/dist/LabGym"
+          SIDECAR="${GITHUB_WORKSPACE}/dist/LabGym"   # should be a DIRECTORY now
 
-          echo "== Top-level dist listing =="
-          ls -la "${GITHUB_WORKSPACE}/dist" || true
-          echo "== .app Contents listing =="
-          find "${APP}/Contents" -maxdepth 3 -type d -print || true
+          echo "== dist listing =="
+          ls -la "${GITHUB_WORKSPACE}/dist"
 
-          found=""
-          path1="${APP}/Contents/Resources/LabGym/detectron2/modeling/box_regression.py"  # inside .app (preferred)
-          path2="${APP}/Contents/MacOS/LabGym/detectron2/modeling/box_regression.py"      # inside .app (alt)
-          path3="${SIDECAR}/LabGym/detectron2/modeling/box_regression.py"                 # sidecar (guaranteed by datas)
+          test -d "${SIDECAR}" || (echo "expected sidecar dir at ${SIDECAR}" && exit 1)
 
-          for p in "$path1" "$path2" "$path3"; do
-            if [ -f "$p" ]; then
-              echo "Found: $p"
-              found="$p"
-              break
-            fi
-          done
-
-          if [ -z "$found" ]; then
-            echo "box_regression.py not found in expected locations. Deep scan to debug:"
-            find "${APP}/Contents" -maxdepth 8 -type f -name 'box_regression.py' -print || true
-            find "${SIDECAR}" -maxdepth 8 -type f -name 'box_regression.py' -print || true
-            echo "Deep scan of detectron2 tree names under both:"
-            find "${APP}/Contents" -maxdepth 8 -type d -name 'detectron2' -print || true
-            find "${SIDECAR}" -maxdepth 8 -type d -name 'detectron2' -print || true
+          target="${SIDECAR}/LabGym/detectron2/modeling/box_regression.py"
+          if [ ! -f "$target" ]; then
+            echo "sidecar missing ${target}; showing tree:"
+            find "${SIDECAR}" -maxdepth 6 -print | sed 's|^|SIDECAR: |'
             exit 1
           fi
 
-          echo "== Smoke test: import + inspect =="
+          echo "Found: $target"
+
           /usr/bin/python3 - <<'PY'
           import sys, os, importlib, inspect
+          # prefer sidecar first, then try inside app if present
           cands = [
-            os.path.abspath("dist/LabGym.app/Contents/Resources"),
-            os.path.abspath("dist/LabGym.app/Contents/MacOS"),
-            os.path.abspath("dist/LabGym"),
+            os.path.abspath("dist/LabGym"),                                 # sidecar
+            os.path.abspath("dist/LabGym.app/Contents/Resources"),          # app Resources
+            os.path.abspath("dist/LabGym.app/Contents/MacOS"),              # app MacOS
           ]
           for base in cands:
               labgym = os.path.join(base, "LabGym")
@@ -83,7 +69,7 @@ jobs:
                   sys.path.insert(0, base)
           m = importlib.import_module("LabGym.detectron2.modeling.box_regression")
           print("Loaded from:", m.__file__)
-          print("Source lines on Box2BoxTransform:", len(inspect.getsource(m.Box2BoxTransform).splitlines()))
+          print("Source len:", len(inspect.getsource(m.Box2BoxTransform).splitlines()))
           PY
 
 
