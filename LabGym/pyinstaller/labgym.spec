@@ -5,8 +5,10 @@ import os
 from pathlib import Path
 from PyInstaller.utils.hooks import collect_all
 
-spec_file = Path(os.path.abspath(__file__))
-project_root = spec_file.parent.parent.parent  # .../LabGym/pyinstaller -> repo root
+project_root = Path.cwd()
+labgym_root = project_root / 'LabGym'
+assert labgym_root.exists(), f"Expected {labgym_root} to exist; run PyInstaller from repo root."
+
 pathex = [str(project_root)]
 
 # --- Force detectron2 (vendored) to be shipped as real .py files on disk ---

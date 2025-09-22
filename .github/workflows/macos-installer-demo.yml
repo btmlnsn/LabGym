@@ -29,6 +29,7 @@ jobs:
           pip install pyinstaller-hooks-contrib
 
       - name: Build LabGym.app via spec
+        working-directory: ${{ github.workspace }}
         run: |
           pyinstaller --clean --noconfirm LabGym/pyinstaller/labgym.spec
 
