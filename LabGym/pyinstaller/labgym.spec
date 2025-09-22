@@ -6,48 +6,62 @@ import os
 from PyInstaller.building.build_main import Analysis, PYZ, EXE, BUNDLE
 from PyInstaller.utils.hooks import collect_submodules
 
-# ---- Path setup (PyInstaller runs spec without __file__) ----
+# ---- Paths ----
 project_root = Path.cwd()
 labgym_root = project_root / 'LabGym'
 assert labgym_root.exists(), f"Expected {labgym_root} to exist; run PyInstaller from repo root."
 pathex = [str(project_root)]
 
-# ---- Entry script (absolute) ----
+# ---- Entrypoint ----
 entry_script = labgym_root / 'pyinstaller' / 'myapp.py'
 assert entry_script.exists(), f"Entry script not found: {entry_script}"
 
-# ---- Vendored detectron2 paths ----
+# ---- Vendored detectron2 ----
 vendored_detectron2 = labgym_root / 'detectron2'
 assert vendored_detectron2.exists(), f"Vendored detectron2 not found at: {vendored_detectron2}"
 
-# ---- Optional logging.yaml if you ship it ----
-log_yaml = labgym_root / 'logging.yaml'
-has_log_yaml = log_yaml.exists()
+def walk_as_datas(src_dir: Path, dest_prefix: str):
+    out = []
+    src_dir = src_dir.resolve()
+    for root, _, files in os.walk(src_dir):
+        root_p = Path(root)
+        for fn in files:
+            src = root_p / fn
+            rel = src.relative_to(src_dir)
+            dest = Path(dest_prefix) / rel
+            out.append((str(src), str(dest)))
+    return out
 
-# ---- Runtime hook to prefer on-disk sources (we updated this earlier) ----
+# ---- Sidecar datas (guaranteed copy next to the .app) ----
+datas = []
+datas += walk_as_datas(vendored_detectron2, 'LabGym/detectron2')
+
+# Optional logging.yaml
+log_yaml = labgym_root / 'logging.yaml'
+if log_yaml.exists():
+    datas.append((str(log_yaml), 'LabGym'))
+
+# ---- Runtime hook ----
 runtime_hook = labgym_root / 'pyinstaller' / 'rthook_detectron2_source.py'
 assert runtime_hook.exists(), f"Missing runtime hook: {runtime_hook}"
 
-# ---- Hidden imports kept minimal (avoid importing vendored pkg at spec time) ----
+# ---- Hidden imports ----
 hiddenimports = [
     'torch',
     'torchvision',
     'tomli',
 ]
 
-# ---- Prefer torchvision as .py too (helps inspect/JIT sometimes) ----
+# ---- Prefer torchvision as .py (helps inspect/JIT sometimes) ----
 module_collection_mode = {
     'torchvision': 'py',
-    # If any external 'detectron2' sneaks in via deps, you can also force:
-    # 'detectron2': 'py',
 }
 
-# ---- Build graph ----
 a = Analysis(
     scripts=[str(entry_script)],
     pathex=pathex,
     binaries=[],
-    datas=[],                       # <- leave empty here; we’ll place files via BUNDLE.resources
+    datas=datas,                    # ensure sidecar copy exists for JIT
     hiddenimports=hiddenimports,
     hookspath=[],
     runtime_hooks=[str(runtime_hook)],
@@ -76,12 +90,11 @@ exe = EXE(
     icon=icon_arg,
 )
 
-# ---- Put vendored sources *inside* .app/Contents/Resources ----
+# ---- ALSO request a copy inside .app/Contents/Resources ----
 bundle_resources = [
-    # Copy the entire vendored detectron2 tree into Resources/LabGym/detectron2
     (str(vendored_detectron2), 'LabGym/detectron2'),
 ]
-if has_log_yaml:
+if log_yaml.exists():
     bundle_resources.append((str(log_yaml), 'LabGym'))
 
 app = BUNDLE(
@@ -90,5 +103,5 @@ app = BUNDLE(
     bundle_identifier='yelab.LabGym',
     icon=icon_arg,
     info_plist={'NSHighResolutionCapable': True},
-    resources=bundle_resources,     # <—— KEY: ensure physical files inside Resources
+    resources=bundle_resources,     # if honored, places files into Contents/Resources
 )

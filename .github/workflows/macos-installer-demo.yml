@@ -37,51 +37,58 @@ jobs:
       - name: Verify vendored detectron2 sources and inspect()
         shell: bash
         run: |
-          set -euo pipefail
-          APP="${GITHUB_WORKSPACE}/dist/LabGym.app"
-          SIDECAR="${GITHUB_WORKSPACE}/dist/LabGym"
+          - name: Verify vendored detectron2 sources and inspect()
+  shell: bash
+  run: |
+    set -euo pipefail
+    APP="${GITHUB_WORKSPACE}/dist/LabGym.app"
+    SIDECAR="${GITHUB_WORKSPACE}/dist/LabGym"
 
-          echo "== Top-level dist listing =="
-          ls -la "${GITHUB_WORKSPACE}/dist" || true
+    echo "== Top-level dist listing =="
+    ls -la "${GITHUB_WORKSPACE}/dist" || true
+    echo "== .app Contents listing =="
+    find "${APP}/Contents" -maxdepth 3 -type d -print || true
 
-          found=""
-          path1="${APP}/Contents/Resources/LabGym/detectron2/modeling/box_regression.py"  # BUNDLE(resources)
-          path2="${APP}/Contents/MacOS/LabGym/detectron2/modeling/box_regression.py"      # fallback if MacOS layout
-          path3="${SIDECAR}/LabGym/detectron2/modeling/box_regression.py"                 # sidecar fallback
+    found=""
+    path1="${APP}/Contents/Resources/LabGym/detectron2/modeling/box_regression.py"  # inside .app (preferred)
+    path2="${APP}/Contents/MacOS/LabGym/detectron2/modeling/box_regression.py"      # inside .app (alt)
+    path3="${SIDECAR}/LabGym/detectron2/modeling/box_regression.py"                 # sidecar (guaranteed by datas)
 
-          for p in "$path1" "$path2" "$path3"; do
-            if [ -f "$p" ]; then
-              echo "Found: $p"
-              found="$p"
-              break
-            fi
-          done
+    for p in "$path1" "$path2" "$path3"; do
+      if [ -f "$p" ]; then
+        echo "Found: $p"
+        found="$p"
+        break
+      fi
+    done
 
-          if [ -z "$found" ]; then
-            echo "box_regression.py not found in expected locations. Trees for debugging:"
-            echo "-- Contents --"
-            find "${APP}/Contents" -maxdepth 6 -type f -name 'box_regression.py' -print || true
-            echo "-- Sidecar --"
-            find "${SIDECAR}" -maxdepth 6 -type f -name 'box_regression.py' -print || true
-            exit 1
-          fi
+    if [ -z "$found" ]; then
+      echo "box_regression.py not found in expected locations. Deep scan to debug:"
+      find "${APP}/Contents" -maxdepth 8 -type f -name 'box_regression.py' -print || true
+      find "${SIDECAR}" -maxdepth 8 -type f -name 'box_regression.py' -print || true
+      echo "Deep scan of detectron2 tree names under both:"
+      find "${APP}/Contents" -maxdepth 8 -type d -name 'detectron2' -print || true
+      find "${SIDECAR}" -maxdepth 8 -type d -name 'detectron2' -print || true
+      exit 1
+    fi
 
-          echo "== Smoke test: import + inspect =="
-          /usr/bin/python3 - <<'PY'
-          import sys, os, importlib, inspect
-          cands = [
-            os.path.abspath("dist/LabGym.app/Contents/Resources"),
-            os.path.abspath("dist/LabGym.app/Contents/MacOS"),
-            os.path.abspath("dist/LabGym"),
-          ]
-          for base in cands:
-              labgym = os.path.join(base, "LabGym")
-              if os.path.isdir(labgym):
-                  sys.path.insert(0, base)
-          m = importlib.import_module("LabGym.detectron2.modeling.box_regression")
-          print("Loaded from:", m.__file__)
-          print("Source lines on Box2BoxTransform:", len(inspect.getsource(m.Box2BoxTransform).splitlines()))
-          PY
+    echo "== Smoke test: import + inspect =="
+    /usr/bin/python3 - <<'PY'
+    import sys, os, importlib, inspect
+    cands = [
+      os.path.abspath("dist/LabGym.app/Contents/Resources"),
+      os.path.abspath("dist/LabGym.app/Contents/MacOS"),
+      os.path.abspath("dist/LabGym"),
+    ]
+    for base in cands:
+        labgym = os.path.join(base, "LabGym")
+        if os.path.isdir(labgym):
+            sys.path.insert(0, base)
+    m = importlib.import_module("LabGym.detectron2.modeling.box_regression")
+    print("Loaded from:", m.__file__)
+    print("Source lines on Box2BoxTransform:", len(inspect.getsource(m.Box2BoxTransform).splitlines()))
+    PY
+
 
       - name: Create DMG
         run: |
