@@ -32,14 +32,14 @@ jobs:
           echo "Found: $APP_RES/LabGym/detectron2/modeling/box_regression.py"
           # Optional: show which loader will be used if imported at runtime
           python - <<'PY'
-import importlib, inspect, sys, os
-# Simulate the runtime hook logic so we know import will hit the on-disk copy
-res = "dist/LabGym.app/Contents/Resources"
-sys.path.insert(0, os.path.abspath(res))  # parent of LabGym
-m = importlib.import_module("LabGym.detectron2.modeling.box_regression")
-print("Module __file__ =", m.__file__)
-print("Has source?     =", bool(inspect.getsource(m.Box2BoxTransform)))
-PY
+          import importlib, inspect, sys, os
+          # Simulate the runtime hook logic so we know import will hit the on-disk copy
+          res = "dist/LabGym.app/Contents/Resources"
+          sys.path.insert(0, os.path.abspath(res))  # parent of LabGym
+          m = importlib.import_module("LabGym.detectron2.modeling.box_regression")
+          print("Module __file__ =", m.__file__)
+          print("Has source?     =", bool(inspect.getsource(m.Box2BoxTransform)))
+          PY
 
       - name: Create DMG
         run: |
