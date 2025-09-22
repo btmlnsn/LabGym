@@ -13,7 +13,7 @@ ICON      = os.path.join(PKG_DIR, "assets", "icons", "labgym.icns")
 hiddenimports = []
 binaries = []
 
-# Collect torch & torchvision binaries + submodules
+# Collect torch & torchvision binaries + submodules (keep Torch fully available)
 for mod in ("torch", "torchvision"):
     try:
         hiddenimports += collect_submodules(mod)
@@ -24,7 +24,7 @@ for mod in ("torch", "torchvision"):
     except Exception:
         pass
 
-# If you import upstream detectron2 as well, include it too
+# If you also import upstream detectron2 at runtime, include it too
 for mod in ("detectron2",):
     try:
         hiddenimports += collect_submodules(mod)
@@ -41,42 +41,40 @@ try:
 except Exception:
     pass
 
-# tomli for py<3.11 (your mylogging/config uses tomllib/tomli)
+# tomli for py<3.11 (your logging/config tries tomllib then tomli)
 try:
     hiddenimports += collect_submodules("tomli")
 except Exception:
     hiddenimports += ["tomli"]
 
+# Data files
 datas = [
     (os.path.join(PKG_DIR, "assets"), "LabGym/assets"),
 ]
-
 log_cfg = os.path.join(ROOT, "logging.yaml")
 if os.path.exists(log_cfg):
     datas.append((log_cfg, "LabGym"))
 
-# IMPORTANT: ship vendored detectron2 sources as real files
-# (TorchScript needs them at runtime)
+# Ship vendored detectron2 sources as real files (TorchScript needs them)
 D2_VENDOR = os.path.join(PKG_DIR, "detectron2")
 if os.path.isdir(D2_VENDOR):
     datas.append((D2_VENDOR, "LabGym/detectron2"))
 
 a = Analysis(
-    # keep your real entry point — no env hacks (Torch stays ON)
+    # Keep the real entry point — no env hacks; Torch remains enabled
     [os.path.join(PKG_DIR, "__main__.py")],
     pathex=[ROOT],
     binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,
     hookspath=[os.path.join(SPEC_DIR, "hooks")],
-    # Force PyInstaller to *also* write .py files on disk
-    #   for the modules that TorchScript inspects.
-    # Your app uses the vendored detectron2; include upstream if used.
+    # Ensure source .py files are written to disk for modules TorchScript inspects
     module_collection_mode={
         "LabGym.detectron2": "pyz+py",
-        "detectron2": "pyz+py",        # keep if you import upstream too
+        "detectron2": "pyz+py",  # safe if you import upstream detectron2 too
     },
-    noarchive=False,
+    # Guarantee pure-Python modules are available as real files (not only in the PYZ)
+    noarchive=True,
 )
 
 pyz = PYZ(a.pure, a.zipped_data)
