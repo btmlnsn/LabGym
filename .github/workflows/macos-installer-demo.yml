@@ -1,4 +1,12 @@
 # .github/workflows/build-macos-installer.yml
+name: installer-builder
+
+on:
+  push:
+    branches: [ ci/pyinstaller-demo ]
+  workflow_dispatch:
+
+
 jobs:
   build-arm64:
     runs-on: macos-14
