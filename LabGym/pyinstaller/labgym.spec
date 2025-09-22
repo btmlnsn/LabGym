@@ -76,7 +76,7 @@ coll = COLLECT(
     a.datas,
     strip=False,
     upx=False,
-    name='LabGym'   # → dist/LabGym/ (DIRECTORY) guaranteed
+    name='LabGym_sidecar'   # → dist/LabGym/ (DIRECTORY) guaranteed
 )
 
 # 2) also emit the .app bundle (UI entry). resources here are optional; the hook can load from sidecar.
