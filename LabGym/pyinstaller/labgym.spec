@@ -1,74 +1,70 @@
 # labgym.spec
-# Python 3.10 only
 
 import os
 from pathlib import Path
 from PyInstaller.utils.hooks import collect_all
+from PyInstaller.building.build_main import Analysis, PYZ, EXE, BUNDLE
+from PyInstaller.utils.hooks import collect_submodules
+from PyInstaller.building.datastruct import Tree
 
+# Use CWD as repo root (Actions runs pyinstaller from repo root)
 project_root = Path.cwd()
 labgym_root = project_root / 'LabGym'
 assert labgym_root.exists(), f"Expected {labgym_root} to exist; run PyInstaller from repo root."
 
 pathex = [str(project_root)]
 
-# --- Force detectron2 (vendored) to be shipped as real .py files on disk ---
-# We do two things:
-#   (A) Tell PyInstaller to collect the package in "py" mode (no frozen loader).
-#   (B) Also include the whole tree as data, so files physically exist at runtime.
+# ABSOLUTE path to the entry script (prevents the doubled path issue)
+entry_script = labgym_root / 'pyinstaller' / 'myapp.py'
+assert entry_script.exists(), f"Entry script not found: {entry_script}"
+
+# Ship vendored detectron2 as *real .py files on disk* inside the .app
+vendored_detectron2 = labgym_root / 'detectron2'
+assert vendored_detectron2.exists(), f"Vendored detectron2 not found at: {vendored_detectron2}"
+
+datas = []
+# Copy the entire tree into Contents/Resources/LabGym/detectron2/...
+datas += Tree(str(vendored_detectron2), prefix='LabGym/detectron2')
+# also include logging.yaml (adjust if your path differs)
+log_yaml = labgym_root / 'logging.yaml'
+if log_yaml.exists():
+    datas += [(str(log_yaml), 'LabGym')]
+
+# Optional icon (if present)
+icon_file = labgym_root / 'pyinstaller' / 'sunflower.png'
+icon_arg = str(icon_file) if icon_file.exists() else None
+
+# Keep runtime hook that ensures imports prefer on-disk sources
+runtime_hooks = [str(labgym_root / 'pyinstaller' / 'rthook_detectron2_source.py')]
+
+# Min hidden imports (avoid importing vendored package at spec time)
+hiddenimports = [
+    'torch',
+    'torchvision',
+    'tomli',
+] + collect_submodules('torch')[:0]  # no-op; placeholder if you later need it
+
+# Prefer shipping torchvision sources as .py too (helps with inspect/JIT edge cases)
 module_collection_mode = {
-    # Our vendored package
-    'LabGym.detectron2': 'py',
-    # If any external 'detectron2' sneaks in, also force py files
-    'detectron2': 'py',
-    # (Optional) torchvision source kept on disk too, avoids rare JIT/inspect issues
     'torchvision': 'py',
+    # if you *also* rely on external 'detectron2' anywhere, uncomment:
+    # 'detectron2': 'py',
 }
 
-# Collect additional bits PyInstaller could miss
-d2_datas, d2_bins, d2_hidden = collect_all('LabGym.detectron2')
-
-# Explicitly include the vendored source tree as data, to guarantee file presence.
-# This mirrors what `--collect-all LabGym.detectron2` does in John's script.
-vendored_detectron2_src = project_root / 'LabGym' / 'detectron2'
-if not vendored_detectron2_src.exists():
-    raise SystemExit(f"Vendored detectron2 not found at: {vendored_detectron2_src}")
-
-extra_datas = [
-    # (src, dest) -> lands in .app/Contents/Resources/LabGym/detectron2/...
-    (str(vendored_detectron2_src), 'LabGym/detectron2'),
-    # ensure logging.yaml (adjust path if you keep it elsewhere)
-    (str(project_root / 'LabGym' / 'logging.yaml'), 'LabGym'),
-]
-
-# App icon (optional, adjust if you have one)
-icon_file = str((project_root / 'LabGym' / 'pyinstaller' / 'sunflower.png'))
-
-# Runtime hook guarantees sys.path prefers the on-disk copy of LabGym.detectron2
-runtime_hooks = [str(project_root / 'LabGym' / 'pyinstaller' / 'rthook_detectron2_source.py')]
-
 a = Analysis(
-    ['LabGym/pyinstaller/myapp.py'],   # same entrypoint as John’s script
+    scripts=[str(entry_script)],
     pathex=pathex,
-    binaries=d2_bins,
-    datas=extra_datas + d2_datas,
-    hiddenimports=[
-        # torch/vision sometimes dynamic import bits
-        'torch',
-        'torchvision',
-        # defend against dynamic imports inside both detectron2 names
-        'LabGym.detectron2',
-        'detectron2',
-        # tomli still used by some stacks on py3.10
-        'tomli',
-    ] + d2_hidden,
+    binaries=[],
+    datas=datas,
+    hiddenimports=hiddenimports,
     hookspath=[],
     runtime_hooks=runtime_hooks,
     excludes=[],
-    noarchive=True,                    # keep modules unpacked (no PYZ zip)
+    noarchive=True,  # don't zip into PYZ: keep modules unpacked
     module_collection_mode=module_collection_mode,
 )
 
-pyz = PYZ(a.pure)  # still created but unused for our forced 'py' packages
+pyz = PYZ(a.pure)
 
 exe = EXE(
     pyz,
@@ -81,17 +77,14 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=False,
-    console=False,        # windowed app
-    icon=icon_file if os.path.exists(icon_file) else None,
+    console=False,
+    icon=icon_arg,
 )
 
-# On macOS, produce the .app bundle
 app = BUNDLE(
     exe,
     name='LabGym.app',
     bundle_identifier='yelab.LabGym',
-    icon=icon_file if os.path.exists(icon_file) else None,
-    info_plist={
-        'NSHighResolutionCapable': True,
-    },
+    icon=icon_arg,
+    info_plist={'NSHighResolutionCapable': True},
 )
