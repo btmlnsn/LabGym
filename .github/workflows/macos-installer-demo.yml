@@ -22,6 +22,7 @@ jobs:
       SPEC_PATH: "LabGym/pyinstaller/labgym.spec"
       DMG_OUTDIR: "out"
       ICON_BG_PNG: "LabGym/assets/icons/labgym.png"
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -49,15 +50,21 @@ jobs:
           restore-keys: |
             pip-${{ runner.os }}-${{ env.PYTHON_VERSION }}-
 
-      - name: Install build tooling (pin PyInstaller)
+      - name: Install build tooling and runtime deps
         run: |
           set -euo pipefail
           python -m pip install --upgrade pip wheel
+          # Build tools (pyinstaller pinned; hooks contrib)
           pip install "pyinstaller>=6.10,<6.11" pyinstaller-hooks-contrib
+          # Your runtime deps (if present)
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          # Build-time list (kept small; harmless if duplicates pyinstaller)
           pip install -r docs/requirements-build.txt
+          # Py3.10 needs tomli at runtime (your code falls back when tomllib missing)
           pip install tomli
+          # Install the package so imports resolve during analysis
           pip install -e .
+          # DMG packager via Homebrew
           brew list create-dmg >/dev/null 2>&1 || brew install create-dmg
 
       - name: Sanity import check
@@ -72,14 +79,14 @@ jobs:
           print("Sanity imports OK")
           PY
 
-      - name: Build .app with PyInstaller (onedir, real sources)
+      - name: Build .app with PyInstaller (onedir, ship real sources)
         run: |
           set -euo pipefail
           rm -rf build dist
           pyinstaller --clean --noconfirm "${SPEC_PATH}" | tee pyinstaller.log
           echo "Contents of dist/:"
           ls -al dist || true
-          echo "Inspect .app layout:"
+          echo "Inspect app layout (first 3 levels):"
           find "dist/${APP_NAME}.app" -maxdepth 3 -type d -print | sed 's/^/  /' || true
 
       - name: Upload PyInstaller logs
@@ -97,23 +104,21 @@ jobs:
           set -euo pipefail
           APP="dist/${APP_NAME}.app"
           CANDIDATES=(
-            "$APP/Contents/MacOS/LabGym/detectron2/modeling/box_regression.py"
             "$APP/Contents/Resources/LabGym/detectron2/modeling/box_regression.py"
-            "dist/${APP_NAME}/LabGym/detectron2/modeling/box_regression.py"
+            "$APP/Contents/Resources/detectron2/modeling/box_regression.py"
           )
           ok=0
           for p in "${CANDIDATES[@]}"; do
             if [ -f "$p" ]; then
-              echo "Found source: $p"
+              echo "✅ Found source: $p"
               ok=1
             fi
           done
           if [ "$ok" -ne 1 ]; then
-            echo "Detectron2 sources not found as real files on disk."
-            echo "Check pyinstaller.log; ensure noarchive=True and datas copy are applied."
+            echo "❌ Detectron2 sources not found as real files on disk."
+            echo "Check pyinstaller.log; ensure 'datas' includes detectron2 and 'excludes' prevents freezing."
             exit 1
           fi
-
 
       - name: Package to DMG
         run: |

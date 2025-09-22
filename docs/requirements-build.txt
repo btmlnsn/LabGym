@@ -1,2 +1,4 @@
+# requirements-build.txt
+
 # Build-time dependencies only, for Bobby's demo GitHub Actions CI workflow that creates installer artifacts
 pyinstaller==6.10.0
