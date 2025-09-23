@@ -44,29 +44,29 @@ jobs:
         run: |
           set -euo pipefail
           APP="${GITHUB_WORKSPACE}/dist/LabGym.app"
-          SIDECAR="${GITHUB_WORKSPACE}/dist/LabGym"   # should be a DIRECTORY now
+          SIDECAR="${GITHUB_WORKSPACE}/dist/LabGym_sidecar"
 
           echo "== dist listing =="
-          ls -la "${GITHUB_WORKSPACE}/dist"
+          ls -la "${GITHUB_WORKSPACE}/dist" || true
 
-          test -d "${SIDECAR}" || (echo "expected sidecar dir at ${SIDECAR}" && exit 1)
+          if [ ! -d "${SIDECAR}" ]; then
+            echo "Expected sidecar dir at ${SIDECAR}"; exit 1
+          fi
 
           target="${SIDECAR}/LabGym/detectron2/modeling/box_regression.py"
           if [ ! -f "$target" ]; then
-            echo "sidecar missing ${target}; showing tree:"
+            echo "Missing ${target}; showing tree for debug:"
             find "${SIDECAR}" -maxdepth 6 -print | sed 's|^|SIDECAR: |'
             exit 1
           fi
-
           echo "Found: $target"
 
           /usr/bin/python3 - <<'PY'
           import sys, os, importlib, inspect
-          # prefer sidecar first, then try inside app if present
           cands = [
-            os.path.abspath("dist/LabGym"),                                 # sidecar
-            os.path.abspath("dist/LabGym.app/Contents/Resources"),          # app Resources
-            os.path.abspath("dist/LabGym.app/Contents/MacOS"),              # app MacOS
+            os.path.abspath("dist/LabGym_sidecar"),                       # sidecar (preferred)
+            os.path.abspath("dist/LabGym.app/Contents/Resources"),        # if we later copy into app
+            os.path.abspath("dist/LabGym.app/Contents/MacOS"),
           ]
           for base in cands:
               labgym = os.path.join(base, "LabGym")
