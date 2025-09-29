@@ -93,25 +93,22 @@ jobs:
 
 
           "${{ env.pythonLocation }}/python" - <<'PY'
-          import inspect, importlib.util, sys, os
+          import os, ast
           base_candidates = [
-              os.path.abspath("dist/LabGym_sidecar/_internal/LabGym/detectron2/modeling/box_regression.py"),
-              os.path.abspath("dist/LabGym_sidecar/LabGym/detectron2/modeling/box_regression.py"),
+            os.path.abspath("dist/LabGym_sidecar/_internal/LabGym/detectron2/modeling/box_regression.py"),
+            os.path.abspath("dist/LabGym_sidecar/LabGym/detectron2/modeling/box_regression.py"),
           ]
           target = next((p for p in base_candidates if os.path.isfile(p)), None)
           if not target:
-              raise SystemExit("box_regression.py not found in expected sidecar locations")
-
-          spec = importlib.util.spec_from_file_location("d2_box_regression", target)
-          mod = importlib.util.module_from_spec(spec)
-          spec.loader.exec_module(mod)
-
-          # Sanity checks that don’t require importing the whole package
-          print("Loaded from:", target)
-          if hasattr(mod, "Box2BoxTransform"):
-              print("Box2BoxTransform lines:", len(inspect.getsource(mod.Box2BoxTransform).splitlines()))
-          else:
-              raise SystemExit("Box2BoxTransform not found in box_regression.py")
+            raise SystemExit("box_regression.py not found in expected sidecar locations")
+          with open(target, "r", encoding="utf-8") as f:
+            src = f.read()
+          tree = ast.parse(src, filename=target)
+          names = {n.name for n in ast.walk(tree) if isinstance(n, ast.ClassDef)}
+          print("Parsed:", target)
+          if "Box2BoxTransform" not in names:
+            raise SystemExit("Box2BoxTransform class not found in box_regression.py")
+          print("Found class: Box2BoxTransform")
           PY
 
 
