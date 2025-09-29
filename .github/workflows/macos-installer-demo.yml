@@ -120,7 +120,7 @@ jobs:
 
       - name: Create DMG
         run: |
-          set -euo pipefall
+          set -euo pipefail
           brew install create-dmg
           cp -R dist/LabGym.app dist/InstallerRoot/
           cp -R dist/LabGym_sidecar dist/InstallerRoot/
