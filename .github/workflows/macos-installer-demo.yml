@@ -122,9 +122,25 @@ jobs:
         run: |
           set -euo pipefail
           brew install create-dmg
+
+          # Ensure existence of staging dir
+          mkdir -p dist/InstallerRoot
+
+          # Stage contents
           cp -R dist/LabGym.app dist/InstallerRoot/
           cp -R dist/LabGym_sidecar dist/InstallerRoot/
-          create-dmg \
+
+          # Build DMG background args safely
+          declare -a BG_ARGS=()
+          if [[ -n "${DMG_BG_IMAGE:-}" ]]; then
+            BG_ARGS+=(--background "$DMG_BG_IMAGE")
+          fi
+          if [[ -n "${DMG_BG_COLOR:-}" ]]; then
+            BG_ARGS+=(--background-color "$DMG_BG_COLOR")
+          fi
+
+          # Create the DMG (with --overwrite for reruns)
+            --overwrite \
             --volname "LabGym Installer" \
             --window-size 800 540 \
             --icon-size 96 \
