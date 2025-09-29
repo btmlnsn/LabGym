@@ -117,13 +117,17 @@ jobs:
       - name: Create DMG
         run: |
           brew install create-dmg
+          cp -R dist/LabGym.app dist/InstallerRoot/
+          cp -R dist/LabGym_sidecar dist/InstallerRoot/
           create-dmg \
             --volname "LabGym Installer" \
-            --background "LabGym/assets/icons/labgym.png" \
-            --window-size 600 400 \
+            --window-size 800 540 \
             --icon-size 96 \
-            --app-drop-link 450 200 \
-            "dist/LabGym-Installer.dmg" "dist/LabGym.app"
+            --app-drop-link 650 380 \
+            --icon "LabGym.app" 120 380 \
+            --icon "LabGym_sidecar" 120 240 \
+            "${BG_ARGS[@]}" \ 
+            "dist/LabGym-Installer.dmg" "dist/InstallerRoot"
 
 
       - name: Upload DMG artifact
@@ -131,7 +135,7 @@ jobs:
         with:
           name: LabGym-Installer-macOS-arm64-${{ github.run_number }}
           path: dist/LabGym-Installer.dmg
-          if-no-file-found: error
+          if-no-files-found: error
           retention-days: 14
 
 
