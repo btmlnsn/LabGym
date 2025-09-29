@@ -122,3 +122,28 @@ jobs:
             --icon-size 96 \
             --app-drop-link 450 200 \
             "dist/LabGym-Installer.dmg" "dist/LabGym.app"
+
+
+      - name: Upload DMG artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LabGym-Installer-macOS-arm64-${{ github.run_number }}
+          path: dist/LabGym-Installer.dmg
+          if-no-file-found: error
+          retention-days: 14
+
+
+      - name: Zip .app for artifact upload
+        run: |
+          cd dist && zip -r LabGym.app.zip LabGym.app
+      
+      - name: Upload .app artifact
+        uses: actions/upload-artifact@v4
+        with: 
+          name: LabGym.app-macOS-arm64-${{ github.run_number }}
+          path: dist/LabGym.app.zip
+          if-no-files-found: error
+          retention-days: 14
+
+          
+      
