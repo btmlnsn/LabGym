@@ -3,6 +3,7 @@
 from pathlib import Path
 import os
 from PyInstaller.building.build_main import Analysis, PYZ, EXE, BUNDLE, COLLECT
+from PyInstaller.building.datas import Tree
 
 project_root = Path.cwd()
 labgym_root  = project_root / 'LabGym'
@@ -14,28 +15,10 @@ assert entry_script.exists()
 vendored_detectron2 = labgym_root / 'detectron2'
 assert vendored_detectron2.exists()
 
-def walk_as_datas(src_dir: Path, dest_prefix: str):
-    out = []
-    src_dir = src_dir.resolve()
-    for root, _, files in os.walk(src_dir):
-        rp = Path(root)
-        for fn in files:
-            src = rp / fn
-            rel = src.relative_to(src_dir)
-            out.append((str(src), str(Path(dest_prefix) / rel)))
-            # IMPORTANT:
-            # PyInstaller expects the *destination directory* for each file.
-            # If we include the filename here, PyInstaller will append it again:
-            #    .../X.py/X.py   (bad)
-            # So, place each source file into the parent dir of its relative path.
-            rel_parent = rel.parent.as_posix()  # '' or '.' means "root" under dest_prefix
-            dest_dir = f"{dest_prefix}/{rel_parent}" if rel_parent not in ("", ".") else dest_prefix
-            out.append((str(src), dest_dir))
-    return out
-
 # guarantee an on-disk copy in the sidecar folder:
 datas = []
-datas += walk_as_datas(vendored_detectron2, 'LabGym/detectron2')
+# Use Tree to preserve the directory structure safely (avoids __init__.py dir/file collisions)
+datas += Tree(str(vendored_detectron2), prefix='LabGym/detectron2').toc
 
 log_yaml = labgym_root / 'logging.yaml'
 if log_yaml.exists():
