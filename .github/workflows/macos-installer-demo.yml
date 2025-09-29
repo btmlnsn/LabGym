@@ -119,6 +119,7 @@ jobs:
 
 
       - name: Create DMG
+        shell: bash
         run: |
           set -euo pipefail
           brew install create-dmg
@@ -140,6 +141,7 @@ jobs:
           fi
 
           # Create the DMG (with --overwrite for reruns)
+          create-dmg \
             --overwrite \
             --volname "LabGym Installer" \
             --window-size 800 540 \
@@ -147,8 +149,10 @@ jobs:
             --app-drop-link 650 380 \
             --icon "LabGym.app" 120 380 \
             --icon "LabGym_sidecar" 120 240 \
-            "${BG_ARGS[@]}" \ 
-            "dist/LabGym-Installer.dmg" "dist/InstallerRoot"
+            "${BG_ARGS[@]}" \
+            "dist/LabGym-Installer.dmg" \
+            "dist/InstallerRoot"
+
 
 
       - name: Upload DMG artifact
