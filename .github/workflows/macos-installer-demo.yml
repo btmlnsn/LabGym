@@ -118,20 +118,42 @@ jobs:
           PY
 
 
+      - name: Bundle sidecar into .app (Resources)
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP="dist/LabGym.app"
+          SIDECAR="dist/LabGym_sidecar"
+          DEST="${APP}/Contents/Resources/LabGym_sidecar"
+
+          if [[ ! -d "$SIDECAR" ]]; then
+            echo "Expected ${SIDECAR} to exist"; exit 1
+          fi
+
+          rm -rf "$DEST"
+          mkdir -p "${dirname "$DEST"}"
+          mv "$SIDECAR" "$DEST"
+
+          echo "Sidecar moved into: $DEST"
+
+          # optional sanity peek
+          find "$DEST" -maxdepth 3 -type f -name "box_regression.py" -print || true
+
+
       - name: Create DMG
         shell: bash
         run: |
           set -euo pipefail
           brew install create-dmg
 
-          # Ensure existence of staging dir
+          # fresh staging dir
+          rm -rf dist/InstallerRoot
           mkdir -p dist/InstallerRoot
 
-          # Stage contents
+          # stage only the app (sidecar now lives inside Contents/Resources)
           cp -R dist/LabGym.app dist/InstallerRoot/
-          cp -R dist/LabGym_sidecar dist/InstallerRoot/
 
-          # Build DMG background args safely
+          # optional background args
           declare -a BG_ARGS=()
           if [[ -n "${DMG_BG_IMAGE:-}" ]]; then
             BG_ARGS+=(--background "$DMG_BG_IMAGE")
@@ -140,18 +162,17 @@ jobs:
             BG_ARGS+=(--background-color "$DMG_BG_COLOR")
           fi
 
-          # Create the DMG (with --overwrite for reruns)
+          rm -f "dist/LabGym-Installer.dmg"
+
           create-dmg \
             --volname "LabGym Installer" \
             --window-size 800 540 \
             --icon-size 96 \
             --app-drop-link 650 380 \
-            --icon "LabGym.app" 120 380 \
-            --icon "LabGym_sidecar" 120 240 \
+            --icon "LabGym.app" 150 380 \
             ${BG_ARGS+"${BG_ARGS[@]}"} \
             "dist/LabGym-Installer.dmg" \
             "dist/InstallerRoot"
-
 
 
       - name: Upload DMG artifact
