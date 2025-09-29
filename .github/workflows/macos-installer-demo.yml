@@ -41,58 +41,54 @@ jobs:
       # --- 4) Minimal CI proof that source files are on disk ---
       - name: Verify vendored detectron2 sources and inspect()
         shell: bash
+        env: 
+          PYTHONDONTWRITEBYTECODE: "1"
         run: |
           set -euo pipefail
-          APP="${GITHUB_WORKSPACE}/dist/LabGym.app"
           SIDECAR="${GITHUB_WORKSPACE}/dist/LabGym_sidecar"
 
           echo "== dist listing =="
           ls -la "${GITHUB_WORKSPACE}/dist" || true
-          [ -d "${SIDECAR}" ] || { echo "Missing sidecar at ${SIDECAR}"; exit 1; }
 
-          # Try both candidate layouts for the on-disk sources.
-          CAND1="${SIDECAR}/LabGym/detectron2/modeling/box_regression.py"
-          CAND2="${SIDECAR}/_internal/LabGym/detectron2/modeling/box_regression.py"
-
-          if [ -f "$CAND1" ]; then
-            echo "Found source at: $CAND1"
-          elif [ -f "$CAND2" ]; then
-            echo "Found source at: $CAND2"
-          else
-            echo "Neither ${CAND1} nor ${CAND2} found; dumping short trees:"
-            echo "-- sidecar (top) --"; find "${SIDECAR}" -maxdepth 2 -print | sed 's|^|SIDECAR: |'
-            echo "-- sidecar/LabGym --"; [ -d "${SIDECAR}/LabGym" ] && find "${SIDECAR}/LabGym" -maxdepth 3 -print | sed 's|^|SIDECAR: |' || true
-            echo "-- sidecar/_internal/LabGym --"; [ -d "${SIDECAR}/_internal/LabGym" ] && find "${SIDECAR}/_internal/LabGym" -maxdepth 3 -print | sed 's|^|SIDECAR: |' || true
-            # Don't fail yet—try importing to let the runtime hook/path logic prove itself.
+          if [ ! -d "${SIDECAR}" ]; then
+            echo "Expected sidecar dir at ${SIDECAR}"; exit 1
           fi
 
+          # Prefer _internal layout if present
+          if [ -d "${SIDECAR}/_internal" ]; then
+            BASE="${SIDECAR}/_internal"
+          else
+            BASE="${SIDECAR}"
+          fi
+
+          TARGET="${BASE}/LabGym/detectron2/modeling/box_regression.py"
+          if [ ! -f "$TARGET" ]; then
+            echo "Missing ${TARGET}; showing tree for debug:"
+            find "${SIDECAR}" -maxdepth 6 -print | sed 's|^|SIDECAR: |'
+            exit 1
+          fi
+          echo "Found: $TARGET"
+
           "${{ env.pythonLocation }}/python" - <<'PY'
-          import os, sys, importlib, inspect, pprint
-
-          # Prefer sidecar; try both layouts. Also keep .app fallbacks just in case.
-          bases = [
-            os.path.abspath("dist/LabGym_sidecar"),
-            os.path.abspath("dist/LabGym_sidecar/_internal"),
-            os.path.abspath("dist/LabGym.app/Contents/Resources"),
-            os.path.abspath("dist/LabGym.app/Contents/MacOS"),
+          import inspect, importlib.util, sys, os
+          base_candidates = [
+              os.path.abspath("dist/LabGym_sidecar/_internal/LabGym/detectron2/modeling/box_regression.py"),
+              os.path.abspath("dist/LabGym_sidecar/LabGym/detectron2/modeling/box_regression.py"),
           ]
-          for base in bases:
-              labgym = os.path.join(base, "LabGym")
-              if os.path.isdir(labgym):
-                  sys.path.insert(0, base)
+          target = next((p for p in base_candidates if os.path.isfile(p)), None)
+          if not target:
+              raise SystemExit("box_regression.py not found in expected sidecar locations")
 
-          print("sys.path head:")
-          pprint.pprint(sys.path[:6])
+          spec = importlib.util.spec_from_file_location("d2_box_regression", target)
+          mod = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(mod)
 
-          try:
-              m = importlib.import_module("LabGym.detectron2.modeling.box_regression")
-              print("Imported:", m.__name__)
-              print("Loaded from:", getattr(m, "__file__", "<no __file__>"))
-              print("Box2BoxTransform LOC:", len(inspect.getsource(m.Box2BoxTransform).splitlines()))
-          except Exception as e:
-              print("IMPORT FAILED:", e)
-              # Make CI fail here so we see the traceback.
-              raise
+          # Sanity checks that don’t require importing the whole package
+          print("Loaded from:", target)
+          if hasattr(mod, "Box2BoxTransform"):
+              print("Box2BoxTransform lines:", len(inspect.getsource(mod.Box2BoxTransform).splitlines()))
+          else:
+              raise SystemExit("Box2BoxTransform not found in box_regression.py")
           PY
 
 
