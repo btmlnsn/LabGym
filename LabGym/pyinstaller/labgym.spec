@@ -3,7 +3,6 @@
 from pathlib import Path
 import os
 from PyInstaller.building.build_main import Analysis, PYZ, EXE, BUNDLE, COLLECT
-from PyInstaller.building.datas import Tree
 
 project_root = Path.cwd()
 labgym_root  = project_root / 'LabGym'
@@ -17,8 +16,8 @@ assert vendored_detectron2.exists()
 
 # guarantee an on-disk copy in the sidecar folder:
 datas = []
-# Use Tree to preserve the directory structure safely (avoids __init__.py dir/file collisions)
-datas += Tree(str(vendored_detectron2), prefix='LabGym/detectron2').toc
+# Pass the *directory* so PyInstaller copies it recursively and preserves structure
+datas.append((str(vendored_detectron2), 'LabGym/detectron2'))
 
 log_yaml = labgym_root / 'logging.yaml'
 if log_yaml.exists():
