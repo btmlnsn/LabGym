@@ -23,6 +23,14 @@ def walk_as_datas(src_dir: Path, dest_prefix: str):
             src = rp / fn
             rel = src.relative_to(src_dir)
             out.append((str(src), str(Path(dest_prefix) / rel)))
+            # IMPORTANT:
+            # PyInstaller expects the *destination directory* for each file.
+            # If we include the filename here, PyInstaller will append it again:
+            #    .../X.py/X.py   (bad)
+            # So, place each source file into the parent dir of its relative path.
+            rel_parent = rel.parent.as_posix()  # '' or '.' means "root" under dest_prefix
+            dest_dir = f"{dest_prefix}/{rel_parent}" if rel_parent not in ("", ".") else dest_prefix
+            out.append((str(src), dest_dir))
     return out
 
 # guarantee an on-disk copy in the sidecar folder:

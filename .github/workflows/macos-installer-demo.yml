@@ -69,6 +69,29 @@ jobs:
           fi
           echo "Found: $TARGET"
 
+
+          echo "== Ensure there are NO duplicated file.py/file.py directories =="
+          if find "${SIDECAR}" -type d -path '*/*.py/*' -print -quit | grep -q . ; then
+            echo "Found duplicated 'file.py/file.py' style directories:"
+            find "${SIDECAR}" -type d -path '*/*.py/*'
+            exit 1
+          else
+            echo "No duplicated 'file.py/file.py' directories detected."
+          fi
+
+          echo "== Spot-check a few other files exist exactly once =="
+          for P in \
+            "${BASE}/LabGym/detectron2/checkpoint/catalog.py" \
+            "${BASE}/LabGym/detectron2/engine/hooks.py"
+          do
+            if [ ! -f "$P" ]; then
+              echo "Missing expected file: $P"
+              exit 1
+            fi
+            echo "OK: $P"
+          done
+
+
           "${{ env.pythonLocation }}/python" - <<'PY'
           import inspect, importlib.util, sys, os
           base_candidates = [
