@@ -16,10 +16,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+
       - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+
 
       - name: Clean dist/build
         run: |
@@ -35,10 +37,12 @@ jobs:
           # install the project (PEP 517 via pdm-backend) to upll in runtime deps
           pip install -e .
 
+
       - name: Build LabGym.app via spec
         working-directory: ${{ github.workspace }}
         run: |
           pyinstaller --clean --noconfirm LabGym/pyinstaller/labgym.spec
+
 
       # --- 4) Minimal CI proof that source files are on disk ---
       - name: Verify vendored detectron2 sources and inspect()
@@ -116,6 +120,7 @@ jobs:
 
       - name: Create DMG
         run: |
+          set -euo pipefall
           brew install create-dmg
           cp -R dist/LabGym.app dist/InstallerRoot/
           cp -R dist/LabGym_sidecar dist/InstallerRoot/
