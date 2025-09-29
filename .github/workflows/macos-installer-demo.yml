@@ -120,6 +120,5 @@ jobs:
             --background "LabGym/assets/icons/labgym.png" \
             --window-size 600 400 \
             --icon-size 96 \
-            --app-drop-linkn 450 200 \
+            --app-drop-link 450 200 \
             "dist/LabGym-Installer.dmg" "dist/LabGym.app"
-            
