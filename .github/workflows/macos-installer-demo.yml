@@ -149,7 +149,7 @@ jobs:
             --app-drop-link 650 380 \
             --icon "LabGym.app" 120 380 \
             --icon "LabGym_sidecar" 120 240 \
-            "${BG_ARGS[@]}" \
+            ${BG_ARGS+"${BG_ARGS[@]}"} \
             "dist/LabGym-Installer.dmg" \
             "dist/InstallerRoot"
 
