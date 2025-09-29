@@ -142,7 +142,6 @@ jobs:
 
           # Create the DMG (with --overwrite for reruns)
           create-dmg \
-            --overwrite \
             --volname "LabGym Installer" \
             --window-size 800 540 \
             --icon-size 96 \
