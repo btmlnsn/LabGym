@@ -45,6 +45,7 @@ jobs:
           set -euo pipefail
           APP="${GITHUB_WORKSPACE}/dist/LabGym.app"
           SIDECAR="${GITHUB_WORKSPACE}/dist/LabGym_sidecar"
+          SIDECAR_INTERNAL="${SIDECAR}/_internal"
 
           echo "== dist listing =="
           ls -la "${GITHUB_WORKSPACE}/dist" || true
@@ -53,20 +54,36 @@ jobs:
             echo "Expected sidecar dir at ${SIDECAR}"; exit 1
           fi
 
-          target="${SIDECAR}/LabGym/detectron2/modeling/box_regression.py"
-          if [ ! -f "$target" ]; then
-            echo "Missing ${target}; showing tree for debug:"
-            find "${SIDECAR}" -maxdepth 6 -print | sed 's|^|SIDECAR: |'
+          # Check all plausible locations, prefer _internal (PyInstaller 6.10 one-dir layout)
+          targets=(
+            "${SIDECAR_INTERNAL}/LabGym/detectron2/modeling/box_regression.py"
+            "${SIDECAR}/LabGym/detectron2/modeling/box_regression.py"
+            "${APP}/Contents/Resources/LabGym/detectron2/modeling/box_regression.py"
+            "${APP}/Contents/MacOS/LabGym/detectron2/modeling/box_regression.py"
+          )
+
+          found=""
+          for t in "${targets[@]}"; do
+            if [ -f "$t" ]; then found="$t"; break; fi
+          done
+
+          if [ -z "$found" ]; then
+            echo "Missing box_regression.py in expected locations. Trees for debugging:"
+            echo "-- Sidecar (_internal) --"; find "${SIDECAR_INTERNAL}" -maxdepth 6 -print || true
+            echo "-- Sidecar (root) --"; find "${SIDECAR}" -maxdepth 3 -print || true
+            echo "-- .app Resources --"; find "${APP}/Contents/Resources" -maxdepth 4 -print || true
+            echo "-- .app MacOS --"; find "${APP}/Contents/MacOS" -maxdepth 3 -print || true
             exit 1
           fi
-          echo "Found: $target"
+          echo "Found: $found"
 
           /usr/bin/python3 - <<'PY'
           import sys, os, importlib, inspect
           cands = [
-            os.path.abspath("dist/LabGym_sidecar"),                       # sidecar (preferred)
-            os.path.abspath("dist/LabGym.app/Contents/Resources"),        # if we later copy into app
-            os.path.abspath("dist/LabGym.app/Contents/MacOS"),
+              os.path.abspath("dist/LabGym_sidecar/_internal"),  # preferred (PyInstaller 6.10)
+              os.path.abspath("dist/LabGym_sidecar"),            # fallback
+              os.path.abspath("dist/LabGym.app/Contents/Resources"),
+              os.path.abspath("dist/LabGym.app/Contents/MacOS"),
           ]
           for base in cands:
               labgym = os.path.join(base, "LabGym")
@@ -74,7 +91,7 @@ jobs:
                   sys.path.insert(0, base)
           m = importlib.import_module("LabGym.detectron2.modeling.box_regression")
           print("Loaded from:", m.__file__)
-          print("Source len:", len(inspect.getsource(m.Box2BoxTransform).splitlines()))
+          print("Box2BoxTransform source lines:", len(inspect.getsource(m.Box2BoxTransform).splitlines()))
           PY
 
 

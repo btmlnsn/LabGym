@@ -1,3 +1,5 @@
+# LabGym/pyinstaller/rthook_detectron2_source.py
+
 import sys
 from pathlib import Path
 
@@ -6,18 +8,20 @@ def _candidate_bases():
     if getattr(sys, "frozen", False):
         exe = Path(sys.executable).resolve()
         macos = exe.parent                                   # .../LabGym.app/Contents/MacOS
-        bases.append(macos)                                   # inside .app (MacOS)
-        bases.append(macos.parent / "Resources")              # inside .app (Resources)
+        bases.append(macos)                                  # inside .app (MacOS)
+        bases.append(macos.parent / "Resources")             # inside .app (Resources)
 
-        # sidecar (one-folder layout): dist/LabGym (sibling to .app)
-        # .../dist/LabGym.app/Contents/MacOS/LabGym
-        # sidecar likely at .../dist/LabGym
-        dist_dir = macos.parent.parent.parent                 # .../dist
-        bases.append(dist_dir / "LabGym")                     # .../dist/LabGym
+        # dist/
+        dist_dir = macos.parent.parent.parent                # .../dist
+
+        # PyInstaller 6.10 one-dir sidecar puts real files under _internal
+        sidecar_root = dist_dir / "LabGym_sidecar"
+        bases.append(sidecar_root / "_internal")             # preferred: dist/LabGym_sidecar/_internal
+        bases.append(sidecar_root)                           # fallback:  dist/LabGym_sidecar
     else:
         bases.append(Path(__file__).resolve().parent)
-    seen = set()
-    uniq = []
+    # de-dupe while preserving order
+    seen, uniq = set(), []
     for b in bases:
         if b not in seen:
             uniq.append(b)
