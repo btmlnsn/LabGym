@@ -32,6 +32,8 @@ jobs:
           # Keep PyInstaller 6.10 as you pinned; add hooks-contrib explicitly
           pip install -r docs/requirements-build.txt
           pip install pyinstaller-hooks-contrib
+          # install the project (PEP 517 via pdm-backend) to upll in runtime deps
+          pip install -e .
 
       - name: Build LabGym.app via spec
         working-directory: ${{ github.workspace }}
@@ -145,5 +147,5 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-          
+
       
