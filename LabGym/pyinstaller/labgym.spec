@@ -44,7 +44,7 @@ a = Analysis(
 
 pyz = PYZ(a.pure)
 
-icon_file = labgym_root / 'assets' / 'icons' / 'labgym.png'
+icon_file = labgym_root / 'assets' / 'icons' / 'labgym.icns'
 icon_arg  = str(icon_file) if icon_file.exists() else None
 
 exe = EXE(
