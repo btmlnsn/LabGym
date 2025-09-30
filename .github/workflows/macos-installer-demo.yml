@@ -131,7 +131,7 @@ jobs:
           fi
 
           rm -rf "$DEST"
-          mkdir -p "${dirname "$DEST"}"
+          mkdir -p "$(dirname "$DEST")"
           mv "$SIDECAR" "$DEST"
 
           echo "Sidecar moved into: $DEST"
@@ -196,5 +196,3 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-
-      
