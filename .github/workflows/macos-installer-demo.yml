@@ -140,6 +140,17 @@ jobs:
           find "$DEST" -maxdepth 3 -type f -name "box_regression.py" -print || true
 
 
+      - name: Ad-hoc codesign app (no notarization)
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP="dist/LabGym.app"
+          # Sign embedded binaries & the app bundle (ad-hoc identity “-”)
+          codesign --deep --force --sign - "$APP"
+          # Verify locally in CI
+          codesign --verify --deep --strict --verbose=2 "$APP"
+
+
       - name: Create DMG
         shell: bash
         run: |
@@ -195,4 +206,3 @@ jobs:
           path: dist/LabGym.app.zip
           if-no-files-found: error
           retention-days: 14
-
