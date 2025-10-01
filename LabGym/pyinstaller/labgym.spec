@@ -75,7 +75,13 @@ app = BUNDLE(
     name='LabGym.app',
     bundle_identifier='yelab.LabGym',
     icon=icon_arg,
-    info_plist={'NSHighResolutionCapable': True},
+    info_plist={
+        'NSHighResolutionCapable': True,
+        'CFBundleIconFile': 'labgym.icns',  # Explicitly point to icns
+        'CFBundleName': 'LabGym',
+        'CFBundleDisplayName': 'LabGym',
+    },
+    resources=[(str(icon_file), '')],
     # If you *also* want a copy inside the .app, uncomment the line below:
     # resources=[(str(vendored_detectron2), 'LabGym/detectron2')]  # Contents/Resources/...
 )
