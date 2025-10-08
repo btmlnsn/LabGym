@@ -1,0 +1,167 @@
+name: installer-builder
+on:
+  push:
+    branches: [ ci/pyinstaller-demo ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14      # Apple Silicon arm64
+            target: macos
+            arch: arm64
+          - os: macos-13      # Intel x86_64
+            target: macos
+            arch: x86_64
+          - os: windows-latest
+            target: windows
+            arch: x86_64
+
+    runs-on: ${{ matrix.os }}
+    env:
+      PYTHON_VERSION: "3.10"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Clean dist/build
+        run: |
+          python - <<'PY'
+          import shutil; [shutil.rmtree(p, ignore_errors=True) for p in ('dist','build')]
+          PY
+
+      - name: Install build deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r docs/requirements-build.txt
+          pip install pyinstaller-hooks-contrib
+          pip install -e .
+
+      # ===== macOS =====
+      - name: Build macOS app (spec)
+        if: ${{ matrix.target == 'macos' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          "${{ env.pythonLocation }}/python" -m PyInstaller --clean --noconfirm LabGym/pyinstaller/labgym-macos.spec
+
+      - name: Verify sidecar & detectron2 (macOS)
+        if: ${{ matrix.target == 'macos' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          SIDECAR="${GITHUB_WORKSPACE}/dist/LabGym_sidecar"
+          [[ -d "$SIDECAR" ]] || { echo "Expected $SIDECAR"; exit 1; }
+          BASE="$SIDECAR"; [[ -d "$SIDECAR/_internal" ]] && BASE="$SIDECAR/_internal"
+          [[ -f "$BASE/LabGym/detectron2/modeling/box_regression.py" ]] || { find "$SIDECAR" -maxdepth 6 -print; exit 1; }
+          echo "OK: detectron2 files present"
+
+      - name: Bundle sidecar into .app (Resources)
+        if: ${{ matrix.target == 'macos' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP="dist/LabGym.app"
+          SIDECAR="dist/LabGym_sidecar"
+          DEST="${APP}/Contents/Resources/LabGym_sidecar"
+          mkdir -p "${APP}/Contents/Resources"
+          rm -rf "$DEST"
+          mv "$SIDECAR" "$DEST"
+
+      - name: Ensure app icon (ICNS) is present & referenced
+        if: ${{ matrix.target == 'macos' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP="dist/LabGym.app"
+          RES="$APP/Contents/Resources"
+          PL="$APP/Contents/Info.plist"
+          ICNS="labgym.icns"
+          SRC="LabGym/assets/icons/$ICNS"
+          [[ -f "$SRC" ]] || { echo "Missing $SRC"; exit 1; }
+          mkdir -p "$RES"; cp -f "$SRC" "$RES/$ICNS"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleIconFile $ICNS" "$PL" \
+            || /usr/libexec/PlistBuddy -c "Add :CFBundleIconFile string $ICNS" "$PL"
+
+      - name: Ad-hoc codesign (macOS)
+        if: ${{ matrix.target == 'macos' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          codesign --deep --force --sign - "dist/LabGym.app"
+          codesign --verify --deep --strict --verbose=2 "dist/LabGym.app"
+
+      - name: Create DMG (macOS)
+        if: ${{ matrix.target == 'macos' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          brew install create-dmg
+          rm -rf dist/InstallerRoot && mkdir -p dist/InstallerRoot
+          cp -R dist/LabGym.app dist/InstallerRoot/
+          declare -a BG_ARGS=()
+          [[ -n "${DMG_BG_IMAGE:-}" ]] && BG_ARGS+=(--background "$DMG_BG_IMAGE")
+          [[ -n "${DMG_BG_COLOR:-}" ]] && BG_ARGS+=(--background-color "$DMG_BG_COLOR")
+          DMG="dist/LabGym-Installer-${{ matrix.arch }}.dmg"
+          rm -f "$DMG"
+          create-dmg \
+            --volname "LabGym Installer" \
+            --window-size 800 540 \
+            --icon-size 96 \
+            --app-drop-link 650 380 \
+            --icon "LabGym.app" 150 380 \
+            ${BG_ARGS+"${BG_ARGS[@]}"} \
+            "$DMG" "dist/InstallerRoot"
+
+      - name: Upload macOS artifacts
+        if: ${{ matrix.target == 'macos' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: LabGym-macOS-${{ matrix.arch }}-${{ github.run_number }}
+          path: |
+            dist/LabGym-Installer-${{ matrix.arch }}.dmg
+            dist/LabGym.app
+
+      # ===== Windows =====
+      - name: Ensure .ico exists (convert if needed)
+        if: ${{ matrix.target == 'windows' }}
+        shell: pwsh
+        run: |
+          $ico = "LabGym/assets/icons/labgym.ico"
+          if (-not (Test-Path $ico)) {
+            choco install imagemagick --no-progress -y
+            $png = "LabGym/assets/icons/labgym.png"
+            if (-not (Test-Path $png)) { Write-Error "Missing $png and no .ico"; exit 1 }
+            magick convert $png -define icon:auto-resize=256,128,64,48,32,16 $ico
+          }
+
+      - name: Build Windows app (spec)
+        if: ${{ matrix.target == 'windows' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          "${{ env.pythonLocation }}/python" -m PyInstaller --clean --noconfirm LabGym/pyinstaller/labgym-windows.spec
+
+      - name: Install Inno Setup
+        if: ${{ matrix.target == 'windows' }}
+        run: choco install innosetup --no-progress -y
+
+      - name: Create Windows installer (Inno Setup)
+        if: ${{ matrix.target == 'windows' }}
+        run: '"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" LabGym\installer\windows\setup.iss'
+
+      - name: Upload Windows artifacts
+        if: ${{ matrix.target == 'windows' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: LabGym-Windows-x64-${{ github.run_number }}
+          path: |
+            dist/installer/LabGym-Installer-x64.exe
+            dist/LabGym
