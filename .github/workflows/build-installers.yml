@@ -97,27 +97,46 @@ jobs:
           codesign --deep --force --sign - "dist/LabGym.app"
           codesign --verify --deep --strict --verbose=2 "dist/LabGym.app"
 
-      - name: Create DMG (macOS)
+      - name: Create DMG
         if: ${{ matrix.target == 'macos' }}
         shell: bash
         run: |
           set -euo pipefail
           brew install create-dmg
-          rm -rf dist/InstallerRoot && mkdir -p dist/InstallerRoot
-          cp -R dist/LabGym.app dist/InstallerRoot/
+
+          VOLNAME="LabGym Installer"
+          DMG="dist/LabGym-Installer-${{ matrix.arch }}.dmg"
+          STAGING="dist/InstallerRoot"
+
+          # Clean staging & previous outputs
+          rm -rf "$STAGING"
+          mkdir -p "$STAGING"
+          cp -R dist/LabGym.app "$STAGING/"
+
+          # Detach any existing volume with same name (prevents 'Resource busy')
+          if mount | grep -q "/Volumes/$VOLNAME"; then
+            echo "Detaching existing /Volumes/$VOLNAME"
+            hdiutil detach -force "/Volumes/$VOLNAME" || true
+            # give iconservices a moment to release handles
+            sleep 2
+          fi
+
+          # Remove previous DMG if present
+          rm -f "$DMG"
+
+          # Optional background args
           declare -a BG_ARGS=()
           [[ -n "${DMG_BG_IMAGE:-}" ]] && BG_ARGS+=(--background "$DMG_BG_IMAGE")
           [[ -n "${DMG_BG_COLOR:-}" ]] && BG_ARGS+=(--background-color "$DMG_BG_COLOR")
-          DMG="dist/LabGym-Installer-${{ matrix.arch }}.dmg"
-          rm -f "$DMG"
+
           create-dmg \
-            --volname "LabGym Installer" \
+            --volname "$VOLNAME" \
             --window-size 800 540 \
             --icon-size 96 \
             --app-drop-link 650 380 \
             --icon "LabGym.app" 150 380 \
             ${BG_ARGS+"${BG_ARGS[@]}"} \
-            "$DMG" "dist/InstallerRoot"
+            "$DMG" "$STAGING"
 
       - name: Upload macOS artifacts
         if: ${{ matrix.target == 'macos' }}
@@ -154,7 +173,10 @@ jobs:
 
       - name: Create Windows installer (Inno Setup)
         if: ${{ matrix.target == 'windows' }}
-        run: '"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" LabGym\installer\windows\setup.iss'
+        shell: pwsh
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "LabGym\installer\windows\setup.iss"
+
 
       - name: Upload Windows artifacts
         if: ${{ matrix.target == 'windows' }}
