@@ -2,8 +2,6 @@
 name: single-mac-installer-builder
 
 on:
-  push:
-    branches: [ ci/pyinstaller-demo ]
   workflow_dispatch:
 
 

@@ -32,10 +32,9 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Clean dist/build
+        shell: bash
         run: |
-          python - <<'PY'
-          import shutil; [shutil.rmtree(p, ignore_errors=True) for p in ('dist','build')]
-          PY
+          rm -rf dist build || true
 
       - name: Install build deps
         run: |
