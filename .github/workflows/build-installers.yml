@@ -171,6 +171,9 @@ jobs:
         run: |
           set -euo pipefail
           "${{ env.pythonLocation }}/python" -m PyInstaller --clean --noconfirm LabGym/pyinstaller/labgym-windows.spec
+          # show what we built
+          ls -la dist || true
+          ls -la dist/LabGym || true
 
       - name: Install Inno Setup
         if: ${{ matrix.target == 'windows' }}
@@ -183,7 +186,10 @@ jobs:
         if: ${{ matrix.target == 'windows' }}
         shell: pwsh
         run: |
-          iscc "LabGym\installer\windows\setup.iss"
+          $Dist = Join-Path $env:GITHUB_WORKSPACE 'dist\LabGym'
+          if (!(Test-Path $Dist)) { Write-Error "Expected $Dist to exist after PyInstaller build"; exit 1 }
+          # Pass AppDist to the preprocessor so relative paths are not an issue
+          iscc "/DAppDist=$Dist" "LabGym\installer\windows\setup.iss"
 
 
       - name: Upload Windows artifacts
