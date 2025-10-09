@@ -105,30 +105,19 @@ jobs:
           brew install create-dmg
 
           VOLNAME="LabGym Installer"
-          DMG="dist/LabGym-Installer-${{ matrix.arch }}.dmg"
+          DMG="dist/LabGym-Installer-x86_64.dmg"
           STAGING="dist/InstallerRoot"
 
-          # Clean staging & previous outputs
-          rm -rf "$STAGING"
+          rm -rf "$STAGING" "$DMG"
           mkdir -p "$STAGING"
           cp -R dist/LabGym.app "$STAGING/"
 
-          # Detach any existing volume with same name (prevents 'Resource busy')
-          if mount | grep -q "/Volumes/$VOLNAME"; then
-            echo "Detaching existing /Volumes/$VOLNAME"
-            hdiutil detach -force "/Volumes/$VOLNAME" || true
-            # give iconservices a moment to release handles
-            sleep 2
-          fi
-
-          # Remove previous DMG if present
-          rm -f "$DMG"
-
-          # Optional background args
           declare -a BG_ARGS=()
           [[ -n "${DMG_BG_IMAGE:-}" ]] && BG_ARGS+=(--background "$DMG_BG_IMAGE")
           [[ -n "${DMG_BG_COLOR:-}" ]] && BG_ARGS+=(--background-color "$DMG_BG_COLOR")
 
+          # Run create-dmg
+          set +e
           create-dmg \
             --volname "$VOLNAME" \
             --window-size 800 540 \
@@ -137,6 +126,15 @@ jobs:
             --icon "LabGym.app" 150 380 \
             ${BG_ARGS+"${BG_ARGS[@]}"} \
             "$DMG" "$STAGING"
+          status=$?
+          set -e
+
+          if [ $status -ne 0 ]; then
+            echo "create-dmg failed, trying to force detach..."
+            sleep 3
+            hdiutil detach -force "/Volumes/$VOLNAME" || true
+            exit $status
+          fi
 
       - name: Upload macOS artifacts
         if: ${{ matrix.target == 'macos' }}
@@ -169,13 +167,17 @@ jobs:
 
       - name: Install Inno Setup
         if: ${{ matrix.target == 'windows' }}
-        run: choco install innosetup --no-progress -y
+        run: |
+          choco install innosetup --no-progress -y
+          # Must be in PATH for later steps
+          echo "C:\ProgramData\chocolately\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+    
 
       - name: Create Windows installer (Inno Setup)
         if: ${{ matrix.target == 'windows' }}
         shell: pwsh
         run: |
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "LabGym\installer\windows\setup.iss"
+          iscc "LabGym\installer\windows\setup.iss"
 
 
       - name: Upload Windows artifacts
