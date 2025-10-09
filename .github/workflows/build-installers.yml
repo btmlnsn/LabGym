@@ -105,45 +105,52 @@ jobs:
           brew install create-dmg
 
           VOLNAME="LabGym Installer"
-          DMG="dist/LabGym-Installer-x86_64.dmg"
+          DMG="dist/LabGym-Installer-${{ matrix.arch }}.dmg"
           STAGING="dist/InstallerRoot"
 
-          rm -rf "$STAGING" "$DMG"
+          # Clean staging & previous outputs (incl. create-dmg temp files)
+          rm -rf "$STAGING"
           mkdir -p "$STAGING"
           cp -R dist/LabGym.app "$STAGING/"
+          rm -f "$DMG" dist/rw.*.dmg dist/*.DS_Store || true
 
+          # Detach any leftover create-dmg temp mounts (/Volumes/dmg.*) and prior $VOLNAME
+          set +e
+          for M in $(/usr/sbin/diskutil list | awk '/dmg\./{print $NF}'); do
+            [[ -d "/Volumes/$M" ]] && hdiutil detach -force "/Volumes/$M"
+          done
+          [[ -d "/Volumes/$VOLNAME" ]] && hdiutil detach -force "/Volumes/$VOLNAME"
+          set -e
+
+          # Optional background args
           declare -a BG_ARGS=()
           [[ -n "${DMG_BG_IMAGE:-}" ]] && BG_ARGS+=(--background "$DMG_BG_IMAGE")
           [[ -n "${DMG_BG_COLOR:-}" ]] && BG_ARGS+=(--background-color "$DMG_BG_COLOR")
 
-          # Run create-dmg
-          set +e
-          create-dmg \
+          # Retry create-dmg up to 3 times (DiskArbitration can be flaky)
+          n=0
+          until create-dmg \
             --volname "$VOLNAME" \
             --window-size 800 540 \
             --icon-size 96 \
             --app-drop-link 650 380 \
             --icon "LabGym.app" 150 380 \
             ${BG_ARGS+"${BG_ARGS[@]}"} \
-            "$DMG" "$STAGING"
-          status=$?
-          set -e
-
-          if [ $status -ne 0 ]; then
-            echo "create-dmg failed, trying to force detach..."
+            "$DMG" "$STAGING"; do
+            n=$((n+1))
+            if [[ $n -ge 3 ]]; then
+              echo "create-dmg failed after $n attempts"; exit 1
+            fi
+            echo "create-dmg failed (attempt $n). Cleaning up mounts and retrying..."
             sleep 3
-            hdiutil detach -force "/Volumes/$VOLNAME" || true
-            exit $status
-          fi
-
-      - name: Upload macOS artifacts
-        if: ${{ matrix.target == 'macos' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: LabGym-macOS-${{ matrix.arch }}-${{ github.run_number }}
-          path: |
-            dist/LabGym-Installer-${{ matrix.arch }}.dmg
-            dist/LabGym.app
+            set +e
+            for M in $(/usr/sbin/diskutil list | awk '/dmg\./{print $NF}'); do
+              [[ -d "/Volumes/$M" ]] && hdiutil detach -force "/Volumes/$M"
+            done
+            [[ -d "/Volumes/$VOLNAME" ]] && hdiutil detach -force "/Volumes/$VOLNAME"
+            rm -f dist/rw.*.dmg || true
+            set -e
+          done
 
       # ===== Windows =====
       - name: Ensure .ico exists (convert if needed)
@@ -169,8 +176,7 @@ jobs:
         if: ${{ matrix.target == 'windows' }}
         run: |
           choco install innosetup --no-progress -y
-          # Must be in PATH for later steps
-          echo "C:\ProgramData\chocolately\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo "C:\ProgramData\chocolatey\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
     
 
       - name: Create Windows installer (Inno Setup)
