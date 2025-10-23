@@ -166,6 +166,15 @@ jobs:
             set -e
           done
 
+      - name: Upload macOS artifacts
+        if: ${{ matrix.target == 'macos' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: LabGym-macOS-${{ matrix.arch }}-${{ github.run_number }}
+          path: |
+            dist/LabGym-Installer-${{ matrix.arch }}.dmg
+            dist/LabGym.app
+
       # ===== Windows =====
       - name: Ensure .ico exists (convert if needed)
         if: ${{ matrix.target == 'windows' }}
