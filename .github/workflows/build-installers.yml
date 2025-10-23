@@ -114,12 +114,21 @@ jobs:
           cp -R dist/LabGym.app "$STAGING/"
           rm -f "$DMG" dist/rw.*.dmg dist/*.DS_Store || true
 
-          # Detach any leftover create-dmg temp mounts (/Volumes/dmg.*) and prior $VOLNAME
+          # More aggressive cleanup of any mounted volumes
           set +e
+          # Kill any lingering hdiutil processes first
+          pkill -f hdiutil || true
+          sleep 1
+          
+          # Detach all dmg-related volumes
           for M in $(/usr/sbin/diskutil list | awk '/dmg\./{print $NF}'); do
-            [[ -d "/Volumes/$M" ]] && hdiutil detach -force "/Volumes/$M"
+            [[ -d "/Volumes/$M" ]] && hdiutil detach -force "/Volumes/$M" 2>/dev/null || true
           done
-          [[ -d "/Volumes/$VOLNAME" ]] && hdiutil detach -force "/Volumes/$VOLNAME"
+          [[ -d "/Volumes/$VOLNAME" ]] && hdiutil detach -force "/Volumes/$VOLNAME" 2>/dev/null || true
+          
+          # Also clean up any temp files that might be causing issues
+          rm -rf /tmp/create-dmg* || true
+          rm -rf /tmp/dmg.* || true
           set -e
 
           # Optional background args
@@ -142,13 +151,18 @@ jobs:
               echo "create-dmg failed after $n attempts"; exit 1
             fi
             echo "create-dmg failed (attempt $n). Cleaning up mounts and retrying..."
-            sleep 3
+            # More aggressive cleanup on retry
             set +e
+            pkill -f hdiutil || true
+            sleep 2
             for M in $(/usr/sbin/diskutil list | awk '/dmg\./{print $NF}'); do
-              [[ -d "/Volumes/$M" ]] && hdiutil detach -force "/Volumes/$M"
+              [[ -d "/Volumes/$M" ]] && hdiutil detach -force "/Volumes/$M" 2>/dev/null || true
             done
-            [[ -d "/Volumes/$VOLNAME" ]] && hdiutil detach -force "/Volumes/$VOLNAME"
+            [[ -d "/Volumes/$VOLNAME" ]] && hdiutil detach -force "/Volumes/$VOLNAME" 2>/dev/null || true
             rm -f dist/rw.*.dmg || true
+            rm -rf /tmp/create-dmg* || true
+            rm -rf /tmp/dmg.* || true
+            sleep 2
             set -e
           done
 
@@ -187,9 +201,23 @@ jobs:
         shell: pwsh
         run: |
           $Dist = Join-Path $env:GITHUB_WORKSPACE 'dist\LabGym'
+          $SetupScript = Join-Path $env:GITHUB_WORKSPACE 'LabGym\pyinstaller\setup.iss'
+          
+          Write-Host "Checking paths:"
+          Write-Host "  Dist: $Dist"
+          Write-Host "  Setup Script: $SetupScript"
+          Write-Host "  Dist exists: $(Test-Path $Dist)"
+          Write-Host "  Setup script exists: $(Test-Path $SetupScript)"
+          
           if (!(Test-Path $Dist)) { Write-Error "Expected $Dist to exist after PyInstaller build"; exit 1 }
+          if (!(Test-Path $SetupScript)) { Write-Error "Expected $SetupScript to exist"; exit 1 }
+          
+          # Show contents of dist directory
+          Write-Host "Contents of dist directory:"
+          Get-ChildItem -Path $Dist -Recurse | Select-Object Name, FullName | Format-Table
+          
           # Pass AppDist to the preprocessor so relative paths are not an issue
-          iscc "/DAppDist=$Dist" "LabGym\installer\windows\setup.iss"
+          iscc "/DAppDist=$Dist" "$SetupScript"
 
 
       - name: Upload Windows artifacts
