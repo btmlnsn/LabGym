@@ -26,11 +26,8 @@ AppUpdatesURL={#MyAppURL}
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
-LicenseFile={#AppDist}\LICENSE.txt
-InfoBeforeFile={#AppDist}\README.md
 OutputDir=dist\installer
 OutputBaseFilename=LabGym-Installer-x64
-SetupIconFile={#AppDist}\assets\icons\labgym.ico
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -59,14 +56,4 @@ Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\{#MyAppName}"; Fil
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
-[Code]
-function InitializeSetup(): Boolean;
-begin
-  Result := True;
-  // Check if the source directory exists
-  if not DirExists(ExpandConstant('{#AppDist}')) then
-  begin
-    MsgBox('Source directory not found: ' + ExpandConstant('{#AppDist}'), mbError, MB_OK);
-    Result := False;
-  end;
-end;
+

@@ -217,7 +217,18 @@ jobs:
           Get-ChildItem -Path $Dist -Recurse | Select-Object Name, FullName | Format-Table
           
           # Pass AppDist to the preprocessor so relative paths are not an issue
+          Write-Host "Running Inno Setup compiler..."
           iscc "/DAppDist=$Dist" "$SetupScript"
+          
+          # Check if installer was created
+          $InstallerPath = Join-Path $env:GITHUB_WORKSPACE 'dist\installer\LabGym-Installer-x64.exe'
+          if (Test-Path $InstallerPath) {
+            Write-Host "Installer created successfully: $InstallerPath"
+            Get-Item $InstallerPath | Format-List
+          } else {
+            Write-Error "Installer was not created at expected location: $InstallerPath"
+            exit 1
+          }
 
 
       - name: Upload Windows artifacts
