@@ -118,17 +118,23 @@ jobs:
           set +e
           # Kill any lingering hdiutil processes first
           pkill -f hdiutil || true
-          sleep 1
+          pkill -f create-dmg || true
+          sleep 2
           
-          # Detach all dmg-related volumes
+          # Detach all dmg-related volumes with multiple attempts
           for M in $(/usr/sbin/diskutil list | awk '/dmg\./{print $NF}'); do
             [[ -d "/Volumes/$M" ]] && hdiutil detach -force "/Volumes/$M" 2>/dev/null || true
+            sleep 1
+            [[ -d "/Volumes/$M" ]] && hdiutil detach -force "/Volumes/$M" 2>/dev/null || true
           done
+          [[ -d "/Volumes/$VOLNAME" ]] && hdiutil detach -force "/Volumes/$VOLNAME" 2>/dev/null || true
+          sleep 1
           [[ -d "/Volumes/$VOLNAME" ]] && hdiutil detach -force "/Volumes/$VOLNAME" 2>/dev/null || true
           
           # Also clean up any temp files that might be causing issues
           rm -rf /tmp/create-dmg* || true
           rm -rf /tmp/dmg.* || true
+          rm -rf /var/folders/*/T/createdmg.tmp.* || true
           set -e
 
           # Optional background args
@@ -154,15 +160,21 @@ jobs:
             # More aggressive cleanup on retry
             set +e
             pkill -f hdiutil || true
-            sleep 2
+            pkill -f create-dmg || true
+            sleep 3
             for M in $(/usr/sbin/diskutil list | awk '/dmg\./{print $NF}'); do
               [[ -d "/Volumes/$M" ]] && hdiutil detach -force "/Volumes/$M" 2>/dev/null || true
+              sleep 1
+              [[ -d "/Volumes/$M" ]] && hdiutil detach -force "/Volumes/$M" 2>/dev/null || true
             done
+            [[ -d "/Volumes/$VOLNAME" ]] && hdiutil detach -force "/Volumes/$VOLNAME" 2>/dev/null || true
+            sleep 1
             [[ -d "/Volumes/$VOLNAME" ]] && hdiutil detach -force "/Volumes/$VOLNAME" 2>/dev/null || true
             rm -f dist/rw.*.dmg || true
             rm -rf /tmp/create-dmg* || true
             rm -rf /tmp/dmg.* || true
-            sleep 2
+            rm -rf /var/folders/*/T/createdmg.tmp.* || true
+            sleep 3
             set -e
           done
 
