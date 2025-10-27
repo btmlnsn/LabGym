@@ -142,7 +142,7 @@ jobs:
           [[ -n "${DMG_BG_IMAGE:-}" ]] && BG_ARGS+=(--background "$DMG_BG_IMAGE")
           [[ -n "${DMG_BG_COLOR:-}" ]] && BG_ARGS+=(--background-color "$DMG_BG_COLOR")
 
-          # Retry create-dmg up to 3 times (DiskArbitration can be flaky)
+          # Retry create-dmg up to 25 times (DiskArbitration can be flaky)
           n=0
           until create-dmg \
             --volname "$VOLNAME" \
@@ -153,7 +153,7 @@ jobs:
             ${BG_ARGS+"${BG_ARGS[@]}"} \
             "$DMG" "$STAGING"; do
             n=$((n+1))
-            if [[ $n -ge 3 ]]; then
+            if [[ $n -ge 25 ]]; then
               echo "create-dmg failed after $n attempts"; exit 1
             fi
             echo "create-dmg failed (attempt $n). Cleaning up mounts and retrying..."
