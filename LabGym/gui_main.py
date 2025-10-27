@@ -20,7 +20,7 @@ Email: bingye@umich.edu
 # Standard library imports.
 import logging
 import sys
-from .gui_app_icon import set_frame_icon, setup_application_icons
+from pathlib import Path
 
 # Log the load of this module (by the module loader, on first import).
 # Intentionally positioning these statements before other imports, against the
@@ -49,10 +49,13 @@ from .gui_analyzer import PanelLv2_AnalyzeBehaviors,PanelLv2_MineResults,PanelLv
 class InitialPanel(wx.Panel):
 	"""Initial panel, the main window of LabGym."""
 
-	def __init__(self, parent):
+	def __init__(self, parent, update_available=False, current_version="", latest_version=""):
 
 		super().__init__(parent)
 		self.notebook = parent
+		self.update_available = update_available
+		self.current_version = current_version
+		self.latest_version = latest_version
 		self.display_window()
 
 
@@ -76,7 +79,29 @@ class InitialPanel(wx.Panel):
 		links.Add(homepage,0,wx.LEFT|wx.EXPAND,10)
 		links.Add(userguide,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		boxsizer.Add(links,0,wx.ALIGN_CENTER,50)
-		boxsizer.Add(0,50,0)
+		boxsizer.Add(0,20,0)
+
+		# Version indicator section
+		version_status_sizer = wx.BoxSizer(wx.HORIZONTAL)
+		
+		# Current version display
+		self.version_status = wx.StaticText(panel, label=f'v{self.current_version or __version__}')
+		version_status_sizer.Add(self.version_status, 0, wx.LEFT|wx.EXPAND, 10)
+
+		# Update available indicator (clickable)
+		self.update_indicator = wx.StaticText(panel, label='Update Available', 
+		                                    style=wx.ALIGN_CENTER)
+		self.update_indicator.SetForegroundColour(wx.Colour(0, 150, 0))  # Green
+		
+		if self.update_available:
+			self.update_indicator.Show()
+			self.update_indicator.Bind(wx.EVT_LEFT_DOWN, self.show_update_dialog)
+		else:
+			self.update_indicator.Hide()
+		version_status_sizer.Add(self.update_indicator, 0, wx.LEFT|wx.EXPAND, 10)
+
+		boxsizer.Add(version_status_sizer, 0, wx.ALIGN_CENTER, 10)
+		boxsizer.Add(0,30,0)
 
 		module_modules=wx.BoxSizer(wx.HORIZONTAL)
 		button_preprocess=wx.Button(panel,label='Preprocessing Module',size=(250,40))
@@ -119,6 +144,29 @@ class InitialPanel(wx.Panel):
 
 		title = 'Analysis Module'
 		add_or_select_notebook_page(self.notebook, lambda: PanelLv1_AnalysisModule(self.notebook), title)
+
+	def show_update_dialog(self, event):
+		"""Show update instructions dialog when user clicks 'Update Available'."""
+		# Determine the correct upgrade command based on installation method
+		if 'pipx' in str(Path(__file__)):
+			upgrade_command = 'pipx upgrade LabGym'
+		else:
+			upgrade_command = 'python3 -m pip install --upgrade LabGym'
+		
+		# Create informative message with version details and instructions
+		message = f"""A newer version of LabGym is available!
+
+Current version: {self.current_version}
+Latest version: {self.latest_version}
+
+To update LabGym, run this command in your terminal:
+
+{upgrade_command}
+
+For more details about new changes, visit:
+https://github.com/umyelab/LabGym"""
+		
+		wx.MessageBox(message, "Update Available", wx.OK | wx.ICON_INFORMATION)
 
 
 
@@ -366,15 +414,13 @@ class PanelLv1_AnalysisModule(wx.Panel):
 class MainFrame(wx.Frame):
 	"""Main frame and its notebook."""
 
-	def __init__(self):
-		super().__init__(None, title=f'LabGym v{__version__}')
+	def __init__(self, update_available=False, current_version="", latest_version=""):
+		title = f'LabGym v{__version__}'
+		if update_available:
+			title += ' (Update Available)'
+		super().__init__(None, title=title)
 
 		self.SetSize((1000, 600))
-		
-		# Set the app icon within GUI
-		set_frame_icon(self, context='normal')  # Set normal icon first
-		if sys.platform.startswith("win"):
-			set_frame_icon(self, context='small', size=16)  # Override with small icon for title bar
 
 		# Create the aui_manager to manage this frame/window.
 		self.aui_manager = wx.aui.AuiManager()
@@ -389,7 +435,7 @@ class MainFrame(wx.Frame):
 			)
 
 		# Add panel as a page to the notebook.
-		panel = InitialPanel(self.notebook)
+		panel = InitialPanel(self.notebook, update_available, current_version, latest_version)
 		title = 'Home'
 		self.notebook.AddPage(panel, title, select=True)
 		
@@ -417,13 +463,12 @@ class MainFrame(wx.Frame):
 
 
 
-def main_window():
+def main_window(update_available=False, current_version="", latest_version=""):
 	"""Display the main window."""
 	app = wx.App()
 	app.SetAppName("LabGym") # Set app name to influence WM_CLASS
-	setup_application_icons()  # Set up all platform-specific icons
 	
-	MainFrame()  # Create the main frame and its notebook
+	MainFrame(update_available, current_version, latest_version)  # Create the main frame and its notebook
 	logger.info('User interface initialized!')
 	app.MainLoop()
 
