@@ -31,38 +31,49 @@ logger = logging.getLogger(__name__)
 #     logging.debug('%s: %r', "os.getenv('PYTHONPATH')", os.getenv('PYTHONPATH'))
 
 
-def test_probes(monkeypatch):
-    # Arrange
-    _config = {
-        'anonymous': True, 
-        'enable': {'registration': False, 'central_logger': False},
-        }
-    monkeypatch.setattr(probes.config, 'get_config', lambda: _config)
-    logging.debug('%s: %r', '_config', _config)
-    monkeypatch.setattr(probes.central_logging.config, 'get_config', lambda: _config)
+def test_probes(monkeypatch, tmp_path):
+	# Arrange
+	_config = {
+		'anonymous': True,
+		'enable': {'registration': False, 'central_logger': False},
+		}
 
-    # Act
-    probes.probes()
+	# prepare some userdata dirs outside of LabGym, and include in _config.
+	_detectors = str(tmp_path / 'detectors')
+	_models = str(tmp_path / 'models')
+	# Path(_detectors).mkdir()
+	# Path(_models).mkdir()
+	_config.update({'detectors': _detectors, 'models': _models})
+	logging.debug('%s: %r', '_config', _config)
 
-    # Assert
-    # the probes were run and didn't raise an exception.
+	monkeypatch.setattr(probes.config, 'get_config', lambda: _config)
+	logging.debug('%s: %r', '_config', _config)
+	monkeypatch.setattr(probes.central_logging.config, 'get_config', lambda: _config)
+
+	monkeypatch.setattr(probes.userdata_survey, 'survey', lambda *args, **kwargs: None)
+
+	# Act
+	probes.probes()
+
+	# Assert
+	# the probes were run and didn't raise an exception.
 
 
 def test_probes_bad_cacert(monkeypatch, caplog):
-    # Arrange
-    monkeypatch.setenv('REQUESTS_CA_BUNDLE', 
-        str(testdir.joinpath('cacert.fouled.pem')))
+	# Arrange
+	monkeypatch.setenv('REQUESTS_CA_BUNDLE',
+		str(testdir.joinpath('cacert.fouled.pem')))
 
-    # Act (logs an ERROR)
-    probes.probe_url_to_verify_cacert()
+	# Act (logs an ERROR)
+	probes.probe_url_to_verify_cacert()
 
-    # Assert
-    record = caplog.records[-1]
-    assert record.levelname == "ERROR"
-    assert re.match(r'\(non-fatal\) Trouble in SSL cert chain\.\.\. \(', 
-        record.msg)
+	# Assert
+	record = caplog.records[-1]
+	assert record.levelname == "ERROR"
+	assert re.match(r'\(non-fatal\) Trouble in SSL cert chain\.\.\. \(',
+		record.msg)
 
-    # ERROR    LabGym.probes:probes.py:178 (non-fatal) Trouble in SSL cert chain... (HTTPSConnectionPool(host='dl.fbaipublicfiles.com', port=443): Max retries exceeded with url: /detectron2 (Caused by SSLError(SSLError(136, '[X509: NO_CERTIFICATE_OR_CRL_FOUND] no certificate or crl found (_ssl.c:4149)'))))
+	# ERROR    LabGym.probes:probes.py:178 (non-fatal) Trouble in SSL cert chain... (HTTPSConnectionPool(host='dl.fbaipublicfiles.com', port=443): Max retries exceeded with url: /detectron2 (Caused by SSLError(SSLError(136, '[X509: NO_CERTIFICATE_OR_CRL_FOUND] no certificate or crl found (_ssl.c:4149)'))))
 
 
 # def test_version_eq_pypi(monkeypatch, capsys):
@@ -73,14 +84,14 @@ def test_probes_bad_cacert(monkeypatch, caplog):
 #         ]
 #     # monkeypatch the version.parse method to return return_values.pop(0)
 #     monkeypatch.setattr('LabGym.handshake.version.parse', lambda self: return_values.pop(0))
-# 
+#
 #     # Act
 #     handshake.probe_pypi_check_freshness()
-# 
+#
 #     # Assert
 #     # assert re.match('Usage: ', capsys.readouterr().out)
-# 
-# 
+#
+#
 # def test_version_lt_pypi(monkeypatch, capsys):
 #     # Arrange
 #     return_values = [
@@ -89,14 +100,14 @@ def test_probes_bad_cacert(monkeypatch, caplog):
 #         ]
 #     # monkeypatch the version.parse method to return return_values.pop(0)
 #     monkeypatch.setattr('LabGym.handshake.version.parse', lambda self: return_values.pop(0))
-# 
+#
 #     # Act
 #     handshake.probe_pypi_check_freshness()
-# 
+#
 #     # Assert
 #     assert re.match('You are using .*', capsys.readouterr().out)
-# 
-# 
+#
+#
 # def test_version_gt_pypi(monkeypatch, capsys):
 #     # Arrange
 #     return_values = [
@@ -105,9 +116,9 @@ def test_probes_bad_cacert(monkeypatch, caplog):
 #         ]
 #     # monkeypatch the version.parse method to return return_values.pop(0)
 #     monkeypatch.setattr('LabGym.handshake.version.parse', lambda self: return_values.pop(0))
-# 
+#
 #     # Act
 #     handshake.probe_pypi_check_freshness()
-# 
+#
 #     # Assert
 #     # assert re.match('Usage: ', capsys.readouterr().out)

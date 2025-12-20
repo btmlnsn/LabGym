@@ -438,7 +438,7 @@ class MainFrame(wx.Frame):
 		panel = InitialPanel(self.notebook, update_available, current_version, latest_version)
 		title = 'Home'
 		self.notebook.AddPage(panel, title, select=True)
-		
+
 		# Bind the close event to prevent Home tab from being closed
 		self.notebook.Bind(wx.aui.EVT_AUINOTEBOOK_PAGE_CLOSE, self.on_page_close)
 
@@ -465,7 +465,10 @@ class MainFrame(wx.Frame):
 
 def main_window(update_available=False, current_version="", latest_version=""):
 	"""Display the main window."""
-	app = wx.App()
+	app = wx.GetApp()  # reference to the currently running wx.App instance
+	if app is None:
+		app = wx.App()  # new wx.App object
+
 	app.SetAppName("LabGym") # Set app name to influence WM_CLASS
 	
 	MainFrame(update_available, current_version, latest_version)  # Create the main frame and its notebook
