@@ -114,27 +114,12 @@ jobs:
           cp -R dist/LabGym.app "$STAGING/"
           rm -f "$DMG" dist/rw.*.dmg dist/*.DS_Store || true
 
-          # More aggressive cleanup of any mounted volumes
+          # Detach any leftover create-dmg temp mounts (/Volumes/dmg.*) and prior $VOLNAME
           set +e
-          # Kill any lingering hdiutil processes first
-          pkill -f hdiutil || true
-          pkill -f create-dmg || true
-          sleep 2
-          
-          # Detach all dmg-related volumes with multiple attempts
           for M in $(/usr/sbin/diskutil list | awk '/dmg\./{print $NF}'); do
-            [[ -d "/Volumes/$M" ]] && hdiutil detach -force "/Volumes/$M" 2>/dev/null || true
-            sleep 1
-            [[ -d "/Volumes/$M" ]] && hdiutil detach -force "/Volumes/$M" 2>/dev/null || true
+            [[ -d "/Volumes/$M" ]] && hdiutil detach -force "/Volumes/$M"
           done
-          [[ -d "/Volumes/$VOLNAME" ]] && hdiutil detach -force "/Volumes/$VOLNAME" 2>/dev/null || true
-          sleep 1
-          [[ -d "/Volumes/$VOLNAME" ]] && hdiutil detach -force "/Volumes/$VOLNAME" 2>/dev/null || true
-          
-          # Also clean up any temp files that might be causing issues
-          rm -rf /tmp/create-dmg* || true
-          rm -rf /tmp/dmg.* || true
-          rm -rf /var/folders/*/T/createdmg.tmp.* || true
+          [[ -d "/Volumes/$VOLNAME" ]] && hdiutil detach -force "/Volumes/$VOLNAME"
           set -e
 
           # Optional background args
@@ -142,7 +127,7 @@ jobs:
           [[ -n "${DMG_BG_IMAGE:-}" ]] && BG_ARGS+=(--background "$DMG_BG_IMAGE")
           [[ -n "${DMG_BG_COLOR:-}" ]] && BG_ARGS+=(--background-color "$DMG_BG_COLOR")
 
-          # Retry create-dmg up to 25 times (DiskArbitration can be flaky)
+          # Retry create-dmg up to 3 times (DiskArbitration can be flaky)
           n=0
           until create-dmg \
             --volname "$VOLNAME" \
@@ -153,39 +138,19 @@ jobs:
             ${BG_ARGS+"${BG_ARGS[@]}"} \
             "$DMG" "$STAGING"; do
             n=$((n+1))
-            if [[ $n -ge 25 ]]; then
+            if [[ $n -ge 3 ]]; then
               echo "create-dmg failed after $n attempts"; exit 1
             fi
             echo "create-dmg failed (attempt $n). Cleaning up mounts and retrying..."
-            # More aggressive cleanup on retry
+            sleep 3
             set +e
-            pkill -f hdiutil || true
-            pkill -f create-dmg || true
-            sleep 3
             for M in $(/usr/sbin/diskutil list | awk '/dmg\./{print $NF}'); do
-              [[ -d "/Volumes/$M" ]] && hdiutil detach -force "/Volumes/$M" 2>/dev/null || true
-              sleep 1
-              [[ -d "/Volumes/$M" ]] && hdiutil detach -force "/Volumes/$M" 2>/dev/null || true
+              [[ -d "/Volumes/$M" ]] && hdiutil detach -force "/Volumes/$M"
             done
-            [[ -d "/Volumes/$VOLNAME" ]] && hdiutil detach -force "/Volumes/$VOLNAME" 2>/dev/null || true
-            sleep 1
-            [[ -d "/Volumes/$VOLNAME" ]] && hdiutil detach -force "/Volumes/$VOLNAME" 2>/dev/null || true
+            [[ -d "/Volumes/$VOLNAME" ]] && hdiutil detach -force "/Volumes/$VOLNAME"
             rm -f dist/rw.*.dmg || true
-            rm -rf /tmp/create-dmg* || true
-            rm -rf /tmp/dmg.* || true
-            rm -rf /var/folders/*/T/createdmg.tmp.* || true
-            sleep 3
             set -e
           done
-
-      - name: Upload macOS artifacts
-        if: ${{ matrix.target == 'macos' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: LabGym-macOS-${{ matrix.arch }}-${{ github.run_number }}
-          path: |
-            dist/LabGym-Installer-${{ matrix.arch }}.dmg
-            dist/LabGym.app
 
       # ===== Windows =====
       - name: Ensure .ico exists (convert if needed)
@@ -222,40 +187,9 @@ jobs:
         shell: pwsh
         run: |
           $Dist = Join-Path $env:GITHUB_WORKSPACE 'dist\LabGym'
-          $SetupScript = Join-Path $env:GITHUB_WORKSPACE 'LabGym\pyinstaller\setup.iss'
-          
-          Write-Host "Checking paths:"
-          Write-Host "  Dist: $Dist"
-          Write-Host "  Setup Script: $SetupScript"
-          Write-Host "  Dist exists: $(Test-Path $Dist)"
-          Write-Host "  Setup script exists: $(Test-Path $SetupScript)"
-          
           if (!(Test-Path $Dist)) { Write-Error "Expected $Dist to exist after PyInstaller build"; exit 1 }
-          if (!(Test-Path $SetupScript)) { Write-Error "Expected $SetupScript to exist"; exit 1 }
-          
-          # Show contents of dist directory
-          Write-Host "Contents of dist directory:"
-          Get-ChildItem -Path $Dist -Recurse | Select-Object Name, FullName | Format-Table
-          
           # Pass AppDist to the preprocessor so relative paths are not an issue
-          Write-Host "Running Inno Setup compiler..."
-          iscc "/DAppDist=$Dist" "$SetupScript"
-          
-          # Check if installer was created (Inno Setup creates it relative to the script location)
-          $InstallerPath = Join-Path $env:GITHUB_WORKSPACE 'LabGym\pyinstaller\dist\installer\LabGym-Installer-x64.exe'
-          if (Test-Path $InstallerPath) {
-            Write-Host "Installer created successfully: $InstallerPath"
-            Get-Item $InstallerPath | Format-List
-            
-            # Copy installer to the expected location for artifact upload
-            $ExpectedPath = Join-Path $env:GITHUB_WORKSPACE 'dist\installer\LabGym-Installer-x64.exe'
-            New-Item -ItemType Directory -Path (Split-Path $ExpectedPath -Parent) -Force | Out-Null
-            Copy-Item $InstallerPath $ExpectedPath -Force
-            Write-Host "Installer copied to expected location: $ExpectedPath"
-          } else {
-            Write-Error "Installer was not created at expected location: $InstallerPath"
-            exit 1
-          }
+          iscc "/DAppDist=$Dist" "LabGym\installer\windows\setup.iss"
 
 
       - name: Upload Windows artifacts
