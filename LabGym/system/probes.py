@@ -33,9 +33,8 @@ import packaging  # Core utilities for Python packages
 # Local application/library specific imports.
 from LabGym import __version__ as version
 from ..config import central_logging
-from .. import registration
 from .. import config
-from . import survey
+from . import survey, registration
 
 
 def probes() -> None:

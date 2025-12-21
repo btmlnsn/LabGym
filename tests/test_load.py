@@ -64,7 +64,7 @@ def test_imports_with_sysargv_initialized(monkeypatch):
 
 	logging.info('import LabGym.utils.cli')
 	import LabGym.utils.cli
-	submodules.remove('cli')
+	# submodules.remove('cli')
 
 
 def test_remainder():

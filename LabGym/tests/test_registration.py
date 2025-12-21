@@ -10,7 +10,7 @@ import pytest  # pytest: simple powerful testing with Python
 from LabGym import wx_utils  # on load, monkeypatch wx.App to be a singleton
 import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
 
-from LabGym import registration
+from LabGym.system import registration
 
 
 testdir = Path(__file__[:-3])  # dir containing support files for unit tests

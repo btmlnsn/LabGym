@@ -11,7 +11,7 @@
 		Load registration info from file, and return reginfo.
 
 Example 1
-	import registration
+	from LabGym.system import registration
 
 	if not registration.is_registered():
 		# Get reg info from user, store reginfo locally.  Also, send
@@ -20,7 +20,7 @@ Example 1
 		registration.register()
 
 Example 2
-	import registration
+	from LabGym.system import registration
 
 	reginfo = registration.get_reginfo_from_file()
 
@@ -84,8 +84,8 @@ import yaml  # PyYAML, YAML parser and emitter for Python
 
 # Local application/library specific imports.
 from LabGym import __version__ as version
-from LabGym.config import central_logging, config
-from LabGym import wx_utils
+from ..config import central_logging, config
+from ..utils import wx_utils
 import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
 
 # import patch_wx, wx  # wxPython, with wx.App patched to be a strict singleton

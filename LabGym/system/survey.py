@@ -79,8 +79,8 @@ import webbrowser
 import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
 
 # Local application/library specific imports.
-from LabGym.config import config
-from LabGym.utils import wx_utils
+from ..config import config
+from ..utils import wx_utils
 
 
 logger = logging.getLogger(__name__)
