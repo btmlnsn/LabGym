@@ -68,7 +68,7 @@ def test_missing_configfile(monkeypatch):
 def test_bad_configfile(monkeypatch):
 	# Arrange
 	monkeypatch.setattr(config, '_cached_config', None)
-	result = {'configfile': testdir.parent.joinpath('bad.yaml')}
+	result = {'configfile': testdir.joinpath('test_config','bad.yaml')}
 	monkeypatch.setattr(config.cli, 'parse_args', lambda: result)
 	# logging.debug('%s: %r', 'result', result)
 

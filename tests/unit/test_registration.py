@@ -17,22 +17,7 @@ testdir = Path(__file__[:-3])  # dir containing support files for unit tests
 assert testdir.is_dir()
 
 
-@pytest.fixture(scope="module")  # invoke once in the test module
-def wx_app():
-	# setup logic
-	app = wx.App()
 
-	yield app
-
-	# teardown logic
-	# Ensure a graceful shutdown of a wxPython application by deferring
-	# the exit of the main event loop until the current event handling
-	# is complete.
-	wx.CallAfter(app.ExitMainLoop)
-	app.MainLoop()  # Ensure app processes pending events before exit.
-
-	del app
-	wx.App._instance = None
 
 
 def test_dummy():

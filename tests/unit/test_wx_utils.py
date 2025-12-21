@@ -15,27 +15,6 @@ import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
 # assert testdir.is_dir()
 
 
-@pytest.fixture(scope="module")  # invoke once in the test module
-def wx_app():
-	# setup logic
-	app = wx.App()
-
-	logging.debug(f'yield app ({app!r})')
-	yield app
-
-	# teardown logic
-	# Ensure a graceful shutdown of a wxPython application by deferring
-	# the exit of the main event loop until the current event handling
-	# is complete.
-
-	logging.debug(f'wx.CallAfter(app.ExitMainLoop)')
-	wx.CallAfter(app.ExitMainLoop)
-	logging.debug(f'app.MainLoop()')
-	app.MainLoop()  # Ensure app processes pending events before exit.
-
-	del app
-	wx.App._instance = None
-
 
 def test_dummy():
 	# Arrange

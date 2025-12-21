@@ -78,8 +78,23 @@ class StrictSingleton(wx.App):
 		wx.mywx_AppCount += 1
 		return cls._instance
 
+	def __init__(self, *args, **kwargs):
+		"""Initialize the app only once, ensuring wx recognizes it."""
+		# Only initialize if not already initialized
+		if not hasattr(self, '_initialized'):
+			logger.debug('patched __init__ -- initializing')
+			super().__init__(*args, **kwargs)
+			self._initialized = True
+
 
 if not patched:
 	# monkeypatch wx.App
 	wx.mywx_AppCount = 0
 	wx.App = StrictSingleton
+	_original_GetApp = wx.GetApp
+	def patched_GetApp():
+		# "Return the StrictSingleton instance if it exists; otherwise, use the original"
+		if StrictSingleton._instance is not None:
+			return StrictSingleton._instance
+		return _original_GetApp()
+	wx.GetApp = patched_GetApp
