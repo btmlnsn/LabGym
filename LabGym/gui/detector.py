@@ -35,8 +35,8 @@ import wx
 
 # Local application/library specific imports.
 from LabGym.config import config
-from ..detector import Detector
-from ..tools import extract_frames
+from ..core.detector import Detector
+from ..core.tools import extract_frames
 
 
 class PanelLv2_GenerateImages(wx.Panel):

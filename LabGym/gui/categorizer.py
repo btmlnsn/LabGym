@@ -36,15 +36,15 @@ import numpy as np
 import wx
 
 # Local application/library specific imports.
-logger.debug('importing %s ...', '..analyzebehavior')
-from ..analyzebehavior import AnalyzeAnimal
-logger.debug('importing %s done', '..analyzebehavior')
-logger.debug('importing %s ...', '..analyzebehavior_dt')
-from ..analyzebehavior_dt import AnalyzeAnimalDetector
-logger.debug('importing %s done', '..analyzebehavior_dt')
-from ..categorizer import Categorizers
+logger.debug('importing %s ...', '..core.analyzebehavior')
+from ..core.analyzebehavior import AnalyzeAnimal
+logger.debug('importing %s done', '..core.analyzebehavior')
+logger.debug('importing %s ...', '..core.analyzebehavior_dt')
+from ..core.analyzebehavior_dt import AnalyzeAnimalDetector
+logger.debug('importing %s done', '..core.analyzebehavior_dt')
+from ..core.categorizer import Categorizers
 from LabGym.config import config
-from ..tools import sort_examples_from_csv
+from ..core.tools import sort_examples_from_csv
 from .utils import add_or_select_notebook_page
 
 

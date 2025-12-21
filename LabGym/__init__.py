@@ -22,6 +22,7 @@ Email: bingye@umich.edu
 __version__='2.9.6'
 
 
+from .core import analyzebehavior, analyzebehavior_dt, categorizer, detector, tools
 from .utils import cli, logging_config, resource_loader, wx_utils
 from .config import config, central_logging
 from .system import probes, survey, registration
@@ -54,4 +55,9 @@ __all__ = [
     'gui_preprocessor',
     'gui_utils',
     'gui_app_icon',
+    'analyzebehavior',
+    'analyzebehavior_dt',
+    'categorizer',
+    'detector',
+    'tools',
 ]
