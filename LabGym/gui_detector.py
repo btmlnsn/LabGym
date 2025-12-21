@@ -34,7 +34,7 @@ logger.debug('loading %s', __file__)  # pylint: disable=wrong-import-position
 import wx
 
 # Local application/library specific imports.
-from LabGym import config
+from LabGym.config import config
 from .detector import Detector
 from .tools import extract_frames
 

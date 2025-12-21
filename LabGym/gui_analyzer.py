@@ -38,7 +38,7 @@ import wx
 # Local application/library specific imports.
 from .analyzebehavior import AnalyzeAnimal
 from .analyzebehavior_dt import AnalyzeAnimalDetector
-from LabGym import config
+from LabGym.config import config
 from .minedata import data_mining
 from .tools import plot_events, parse_all_events_file, calculate_distances
 

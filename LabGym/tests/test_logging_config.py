@@ -22,7 +22,7 @@ def test_success(monkeypatch):
 	assert rootlogger.level == logging.DEBUG
 	_config = {
 		'logging_configfiles':
-			[Path(logging_config.__file__).parent.parent.joinpath('logging.yaml')],
+			[Path(logging_config.__file__).parent.parent.joinpath('config', 'logging.yaml')],
 		'logging_configfile': None,
 		'logging_level': 'INFO',
 		}

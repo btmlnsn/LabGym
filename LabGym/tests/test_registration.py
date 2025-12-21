@@ -7,7 +7,7 @@ import time
 
 import pytest  # pytest: simple powerful testing with Python
 
-from LabGym import mywx  # on load, monkeypatch wx.App to be a singleton
+from LabGym import wx_utils  # on load, monkeypatch wx.App to be a singleton
 import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
 
 from LabGym import registration
@@ -229,7 +229,6 @@ def x_test_probes(monkeypatch):
 		}
 	monkeypatch.setattr(probes.config, 'get_config', lambda: _config)
 	logging.debug('%s: %r', '_config', _config)
-	monkeypatch.setattr(probes.central_logging.config, 'get_config', lambda: _config)
 
 	# Act
 	probes.probes()

@@ -18,7 +18,7 @@ import queue
 # (none)
 
 # Local application/library specific imports.
-from LabGym import config
+from .config import get_config
 
 
 # cleanup should be registered with atexit if queueing is used.
@@ -96,7 +96,7 @@ def get_central_logger(http_handler_config=http_handler_config, reset=False):
 	"""
 
 	# Get all of the values needed from config.get_config().
-	_config = config.get_config()
+	_config = get_config()
 	central_logger_disabled: bool = not _config['enable']['central_logger']
 
 	central_logger = logging.getLogger('Central Logger')

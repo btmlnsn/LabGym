@@ -32,9 +32,10 @@ import packaging  # Core utilities for Python packages
 
 # Local application/library specific imports.
 from LabGym import __version__ as version
-from LabGym import central_logging, registration
-from LabGym import config
-from LabGym import userdata_survey
+from ..config import central_logging
+from .. import registration
+from .. import config
+from . import survey
 
 
 def probes() -> None:
@@ -54,7 +55,7 @@ def probes() -> None:
 	del _config
 
 	# Check for user data in deprecated LabGym/detectors and LabGym/models
-	userdata_survey.survey(
+	survey.survey(	# type: ignore
 		labgym_dir=os.path.dirname(__file__),
 		detectors_dir=detectors_dir,
 		models_dir=models_dir,

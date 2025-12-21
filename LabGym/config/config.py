@@ -46,7 +46,7 @@ except ModuleNotFoundError:
 import yaml  # PyYAML, YAML parser and emitter for Python
 
 # Local application/library specific imports.
-from .utils import cli
+from ..utils import cli
 
 
 defaults = {
@@ -56,7 +56,7 @@ defaults = {
 	'logging_configfiles': [  # list of paths
 		Path('logging.toml'),  # relative path
 		Path('logging.yaml'),  # relative path
-		Path(__file__).parent.joinpath('logging.yaml'),  # LabGym/logging.yaml
+		Path(__file__).parent.joinpath('logging.yaml'),  # LabGym/config/logging.yaml
 		],
 	# intentionally, no default specified here for logging_configfile
 	# intentionally, no default specified here for logging_level

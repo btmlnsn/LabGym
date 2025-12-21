@@ -8,10 +8,11 @@ import time
 
 import pytest  # pytest: simple powerful testing with Python
 
-from LabGym import mywx  # on load, monkeypatch wx.App to be a singleton
+from LabGym import wx_utils  # on load, monkeypatch wx.App to be a singleton
 import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
 
-from LabGym import userdata_survey
+import LabGym.system.survey as survey_module
+from LabGym.config import config as config_module
 from .exitstatus import exitstatus
 
 
@@ -39,7 +40,7 @@ def wx_app():
 delay = 2000  # msec
 
 
-class AutoclickOK(mywx.OK_Dialog):
+class AutoclickOK(wx_utils.OK_Dialog):
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 		# set a delayed click...
@@ -58,37 +59,37 @@ def test_dummy():
 def test_is_path_under():
 
 	# path1 and path2 are equivalent
-	assert userdata_survey.is_path_under('/a/b', '/a/b') == False
-	assert userdata_survey.is_path_under('/a/b', '/a/b/..') == False
+	assert survey_module.is_path_under('/a/b', '/a/b') == False
+	assert survey_module.is_path_under('/a/b', '/a/b/..') == False
 
 	# path2 is under path1
-	assert userdata_survey.is_path_under('/a/b', '/a/b/c') == True
-	assert userdata_survey.is_path_under('/a/b', '/a/b/c/d') == True
-	assert userdata_survey.is_path_under('/a/b', '/a/c/../b/d') == True
+	assert survey_module.is_path_under('/a/b', '/a/b/c') == True
+	assert survey_module.is_path_under('/a/b', '/a/b/c/d') == True
+	assert survey_module.is_path_under('/a/b', '/a/c/../b/d') == True
 
 	# path2 is not under path1
-	assert userdata_survey.is_path_under('/a/b/c', '/a/b') == False
-	assert userdata_survey.is_path_under('/a/b', '/a/c') == False
-	assert userdata_survey.is_path_under('/a/b', '/a/b/../c') == False
+	assert survey_module.is_path_under('/a/b/c', '/a/b') == False
+	assert survey_module.is_path_under('/a/b', '/a/c') == False
+	assert survey_module.is_path_under('/a/b', '/a/b/../c') == False
 
 
 def test_is_path_equivalent():
 	# path1 and path2 are equivalent
-	assert userdata_survey.is_path_equivalent('/a/b', '/a/b') == True
+	assert survey_module.is_path_equivalent('/a/b', '/a/b') == True
 
 	# path1 and path2 are not equivalent
-	assert userdata_survey.is_path_equivalent('/a/b', '/a/c') == False
+	assert survey_module.is_path_equivalent('/a/b', '/a/c') == False
 
 
 def test_resolve():
-	result = userdata_survey.resolve('.')
+	result = survey_module.resolve('.')
 	assert Path(result).is_absolute()
 
 
 # def dict2str(arg: dict, hanging_indent: str=' '*16) -> str:
 def test_dict2str():
 	myarg = {}
-	assert userdata_survey.dict2str(myarg) == ''
+	assert survey_module.dict2str(myarg) == ''
 
 	# In Python, all standard dictionaries (dict) are ordered by
 	# insertion order starting from Python 3.7.
@@ -100,7 +101,7 @@ def test_dict2str():
 		{hanging_indent}c: C
 		{hanging_indent}b: B
 		""").strip()
-	result = userdata_survey.dict2str(myarg)
+	result = survey_module.dict2str(myarg)
 	assert result == expected
 
 	myarg = {'a': 'A', 'c': 'C', 'b': 'B'}
@@ -110,7 +111,7 @@ def test_dict2str():
 		{hanging_indent}c: C
 		{hanging_indent}b: B
 		""").strip()
-	result = userdata_survey.dict2str(myarg, hanging_indent=hanging_indent)
+	result = survey_module.dict2str(myarg, hanging_indent=hanging_indent)
 	assert result == expected
 
 
@@ -123,7 +124,7 @@ def test_get_list_of_subdirs(tmp_path):
 	(Path(tmp_path) / '__init__.py').touch()
 
 	expected = ['alfa', 'bravo', 'charlie']
-	result = userdata_survey.get_list_of_subdirs(tmp_path)
+	result = survey_module.get_list_of_subdirs(tmp_path)
 	assert result == expected
 
 
@@ -134,13 +135,13 @@ def test_assert_userdata_dirs_are_separate(
 
 	# Arrange
 	# Use a custom self- OK-ing subclass of the dialog object.
-	monkeypatch.setattr(userdata_survey.mywx, 'OK_Dialog', AutoclickOK)
+	monkeypatch.setattr(wx_utils, 'OK_Dialog', AutoclickOK)
 
 	# Act
 	with pytest.raises(SystemExit,
 			match="Bad configuration"
 			) as e:
-		userdata_survey.assert_userdata_dirs_are_separate(tmp_path, tmp_path)
+		survey_module.assert_userdata_dirs_are_separate(tmp_path, tmp_path)
 
 	# Assert
 	assert exitstatus(e.value) == 1
@@ -157,8 +158,8 @@ def test_survey_case1(monkeypatch, tmp_path, wx_app, caplog):
 	"""violate check 1, and get SystemExit."""
 	# Arrange
 	# Use a custom self- OK-ing subclass of the dialog object.
-	monkeypatch.setattr(userdata_survey.mywx, 'OK_Dialog', AutoclickOK)
-	monkeypatch.setattr(userdata_survey.config, 'get_config',
+	monkeypatch.setattr(wx_utils, 'OK_Dialog', AutoclickOK)
+	monkeypatch.setattr(config_module, 'get_config',
 		lambda: {'enable': {'assess_userdata_folders': True}})
 
 	# prepare args
@@ -170,7 +171,7 @@ def test_survey_case1(monkeypatch, tmp_path, wx_app, caplog):
 	with pytest.raises(SystemExit,
 			match="Bad configuration"
 			) as e:
-		userdata_survey.survey(labgym, detectors, models)
+		survey_module.survey(labgym, detectors, models)
 
 	# Assert
 	assert exitstatus(e.value) == 1
@@ -186,8 +187,8 @@ def test_survey_case2(monkeypatch, tmp_path, wx_app, caplog):
 	"""violate check 2, and get Warning."""
 	# Arrange
 	# Use a custom self- OK-ing subclass of the dialog object.
-	monkeypatch.setattr(userdata_survey.mywx, 'OK_Dialog', AutoclickOK)
-	monkeypatch.setattr(userdata_survey.config, 'get_config',
+	monkeypatch.setattr(wx_utils, 'OK_Dialog', AutoclickOK)
+	monkeypatch.setattr(config_module, 'get_config',
 		lambda: {'enable': {'assess_userdata_folders': True}})
 
 	# prepare args
@@ -196,7 +197,7 @@ def test_survey_case2(monkeypatch, tmp_path, wx_app, caplog):
 	models = os.path.join(tmp_path, 'models')
 
 	# Act
-	userdata_survey.survey(labgym, detectors, models)
+	survey_module.survey(labgym, detectors, models)
 
 	# Assert
 	expected_msg = \
@@ -208,8 +209,8 @@ def test_survey_case3(monkeypatch, tmp_path, wx_app, caplog):
 	"""violate check 3, and get Warning."""
 	# Arrange
 	# Use a custom self- OK-ing subclass of the dialog object.
-	monkeypatch.setattr(userdata_survey.mywx, 'OK_Dialog', AutoclickOK)
-	monkeypatch.setattr(userdata_survey.config, 'get_config',
+	monkeypatch.setattr(wx_utils, 'OK_Dialog', AutoclickOK)
+	monkeypatch.setattr(config_module, 'get_config',
 		lambda: {'enable': {'assess_userdata_folders': True}})
 
 	# prepare args
@@ -218,7 +219,7 @@ def test_survey_case3(monkeypatch, tmp_path, wx_app, caplog):
 	models = os.path.join(tmp_path, 'LabGym', 'models')
 
 	# Act
-	userdata_survey.survey(labgym, detectors, models)
+	survey_module.survey(labgym, detectors, models)
 
 	# Assert
 	expected_msg = "Found internal Userdata folders specified by config."
@@ -229,8 +230,8 @@ def test_survey_case4(monkeypatch, tmp_path, wx_app, caplog):
 	"""violate check 4, and get Warning."""
 	# Arrange
 	# Use a custom self- OK-ing subclass of the dialog object.
-	monkeypatch.setattr(userdata_survey.mywx, 'OK_Dialog', AutoclickOK)
-	monkeypatch.setattr(userdata_survey.config, 'get_config',
+	monkeypatch.setattr(wx_utils, 'OK_Dialog', AutoclickOK)
+	monkeypatch.setattr(config_module, 'get_config',
 		lambda: {'enable': {'assess_userdata_folders': True}})
 
 	# prepare args
@@ -259,7 +260,7 @@ def test_survey_case4(monkeypatch, tmp_path, wx_app, caplog):
 	(Path(labgym)/'models'/'__init__.py').touch()
 
 	# Act
-	userdata_survey.survey(labgym, detectors, models)
+	survey_module.survey(labgym, detectors, models)
 
 	# Assert
 	print(caplog.text)

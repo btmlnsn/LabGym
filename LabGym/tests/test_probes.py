@@ -8,7 +8,9 @@ from packaging import version
 
 import pytest  # pytest: simple powerful testing with Python
 
-from LabGym import probes
+import LabGym.system.probes as probes_module
+import LabGym.system.survey as survey_module
+from LabGym.config import config
 from .exitstatus import exitstatus
 
 
@@ -46,14 +48,13 @@ def test_probes(monkeypatch, tmp_path):
 	_config.update({'detectors': _detectors, 'models': _models})
 	logging.debug('%s: %r', '_config', _config)
 
-	monkeypatch.setattr(probes.config, 'get_config', lambda: _config)
+	monkeypatch.setattr(config, 'get_config', lambda: _config)
 	logging.debug('%s: %r', '_config', _config)
-	monkeypatch.setattr(probes.central_logging.config, 'get_config', lambda: _config)
 
-	monkeypatch.setattr(probes.userdata_survey, 'survey', lambda *args, **kwargs: None)
+	monkeypatch.setattr(survey_module, 'survey', lambda *args, **kwargs: None)
 
 	# Act
-	probes.probes()
+	probes_module.probes()
 
 	# Assert
 	# the probes were run and didn't raise an exception.
@@ -65,7 +66,7 @@ def test_probes_bad_cacert(monkeypatch, caplog):
 		str(testdir.joinpath('cacert.fouled.pem')))
 
 	# Act (logs an ERROR)
-	probes.probe_url_to_verify_cacert()
+	probes_module.probe_url_to_verify_cacert()
 
 	# Assert
 	record = caplog.records[-1]

@@ -79,7 +79,7 @@ import webbrowser
 import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
 
 # Local application/library specific imports.
-from LabGym import config
+from LabGym.config import config
 from LabGym.utils import wx_utils
 
 

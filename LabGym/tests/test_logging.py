@@ -4,7 +4,9 @@ import sys
 
 import pytest
 
-from LabGym import central_logging
+from LabGym.config import central_logging
+from LabGym.config import config as config_module
+from LabGym.utils import cli
 # from .exitstatus import exitstatus
 
 
@@ -17,7 +19,8 @@ logging.getLogger().setLevel(logging.DEBUG)
 def test_enable_true(monkeypatch):
 	# Arrange
 	_config = {'enable': {'central_logger': True}}
-	monkeypatch.setattr(central_logging.config, 'get_config', lambda: _config)
+	monkeypatch.setattr(config_module, 'get_config', lambda: _config)
+	monkeypatch.setattr(cli, 'parse_args', lambda: {})
 	logging.debug('%s: %r', '_config', _config)
 
 	# Act

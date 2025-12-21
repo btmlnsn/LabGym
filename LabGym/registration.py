@@ -84,8 +84,7 @@ import yaml  # PyYAML, YAML parser and emitter for Python
 
 # Local application/library specific imports.
 from LabGym import __version__ as version
-from LabGym import central_logging
-from LabGym import config
+from LabGym.config import central_logging, config
 from LabGym import wx_utils
 import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
 
