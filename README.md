@@ -84,9 +84,9 @@ Cite LabGym:
 
 ## Overview
 
-You can use LabGym via its user interface (no coding knowledge needed), or via command prompt. See [**Extended User Guide**](https://github.com/yujiahu415/LabGym/blob/master/LabGym_extended_user_guide.pdf) for details. 
+You can use LabGym via its user interface (no coding knowledge needed), or via command prompt. See [**Extended User Guide**](https://github.com/yujiahu415/LabGym/blob/master/docs/user_guides/LabGym_extended_user_guide.pdf) for details. 
 
-You may also refer to this [**Practical "How To" Guide**](https://github.com/yujiahu415/LabGym/blob/master/LabGym_practical_guide.pdf) with layman language and examples.
+You may also refer to this [**Practical "How To" Guide**](https://github.com/yujiahu415/LabGym/blob/master/docs/user_guides/LabGym_practical_guide.pdf) with layman language and examples.
 
 <p>&nbsp;</p>
 
