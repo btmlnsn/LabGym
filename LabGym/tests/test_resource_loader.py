@@ -5,11 +5,11 @@ import sys
 
 import pytest  # pytest: simple powerful testing with Python
 
-from LabGym import mypkg_resources  # replace deprecated pkg_resources
+from LabGym import resource_loader  
 
-# The mypkg_resources module copies itself into sys.modules['pkg_resources'],
+# The resource_loader module copies itself into sys.modules['pkg_resources'],
 # so this next import statement will not load the pkg_resources package.
-import pkg_resources  # will not load pkg_resources
+
 
 import LabGym.detectron2.model_zoo
 from LabGym.detectron2 import model_zoo  # redundant, but convenient
@@ -43,7 +43,7 @@ def test_resource_filename():
 		)
 
 	# Act
-	result = pkg_resources.resource_filename(*args)
+	result = resource_loader.resource_filename(*args)
 
 	# Assert
 	assert result == os.path.normpath(os.path.join(
@@ -52,10 +52,10 @@ def test_resource_filename():
 		))
 
 
-def test_pkg_resources_is_mypkg_resources():
-	"""Test that pkg_resources has been replaced by mypkg_resources."""
+def test_pkg_resources_is_resource_loader():
+	"""Test that pkg_resources has been replaced by resource_loader."""
 
-	assert sys.modules['pkg_resources'] == sys.modules['LabGym.mypkg_resources']
+	assert sys.modules['pkg_resources'] == sys.modules['LabGym.utils.resource_loader']
 
 
 # def test_get_returns_model():

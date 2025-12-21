@@ -80,7 +80,7 @@ import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
 
 # Local application/library specific imports.
 from LabGym import config
-from LabGym import mywx
+from LabGym.utils import wx_utils
 
 
 logger = logging.getLogger(__name__)
@@ -191,7 +191,7 @@ def assert_userdata_dirs_are_separate(
 		logger.error('%s', msg)
 
 		# Show the error msg with an OK_Dialog.
-		with mywx.OK_Dialog(None, title=title, msg=msg) as dlg:
+		with wx_utils.OK_Dialog(None, title=title, msg=msg) as dlg:
 			result = dlg.ShowModal()  # will return wx.ID_OK upon OK or dismiss
 
 		sys.exit('Bad configuration')
@@ -283,7 +283,7 @@ def survey(
 		logger.warning('%s', msg)
 
 		# Show the warning msg with an OK_Dialog.
-		with mywx.OK_Dialog(None, title=title, msg=textwrap.fill(msg)) as dlg:
+		with wx_utils.OK_Dialog(None, title=title, msg=textwrap.fill(msg)) as dlg:
 			result = dlg.ShowModal()  # will return wx.ID_OK upon OK or dismiss
 
 	# 3.  If any userdata dirs are configured as located within the
@@ -302,7 +302,7 @@ def survey(
 		logger.warning('%s', msg)
 
 		# Show the warning msg with an OK_Dialog.
-		with mywx.OK_Dialog(None, title=title, msg=textwrap.fill(msg)) as dlg:
+		with wx_utils.OK_Dialog(None, title=title, msg=textwrap.fill(msg)) as dlg:
 			result = dlg.ShowModal()  # will return wx.ID_OK upon OK or dismiss
 
 	# 4.  For any userdata dirs configured as external to LabGym tree,
@@ -332,5 +332,5 @@ def survey(
 		logger.warning('%s', msg)
 
 		# Show the warning msg with an OK_Dialog.
-		with mywx.OK_Dialog(None, title=title, msg=textwrap.fill(msg)) as dlg:
+		with wx_utils.OK_Dialog(None, title=title, msg=textwrap.fill(msg)) as dlg:
 			result = dlg.ShowModal()  # will return wx.ID_OK upon OK or dismiss

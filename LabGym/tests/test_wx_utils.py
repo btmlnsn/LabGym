@@ -7,7 +7,7 @@ import time
 
 import pytest  # pytest: simple powerful testing with Python
 
-from LabGym import mywx  # on load, monkeypatch wx.App to be a singleton
+from LabGym import wx_utils  # on load, monkeypatch wx.App to be a singleton
 import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
 
 
@@ -102,7 +102,7 @@ def test_OK_Dialog_with_OK(wx_app):
 
 	msg = '\n'.join(['The quick brown fox',
 		'jumps over the lazy dog.'])
-	dialog = mywx.OK_Dialog(None, title='My Title', msg=msg)
+	dialog = wx_utils.OK_Dialog(None, title='My Title', msg=msg)
 
 	def click_OK():
 		click_event = wx.CommandEvent(wx.EVT_BUTTON.typeId, wx.ID_OK)
@@ -136,7 +136,7 @@ def test_OK_Dialog_with_Close(wx_app):
 
 	msg = '\n'.join(['The quick brown fox',
 		'jumps over the lazy dog.'])
-	dialog = mywx.OK_Dialog(None, title='My Title', msg=msg)
+	dialog = wx_utils.OK_Dialog(None, title='My Title', msg=msg)
 
 	# CallAfter is a function used to schedule a callable to be executed
 	# on the main GUI thread after the current event hander and any
@@ -166,7 +166,7 @@ def test_OK_Cancel_Dialog_with_OK(wx_app):
 
 	msg = '\n'.join(['The quick brown fox',
 		'jumps over the lazy dog.'])
-	dialog = mywx.OK_Cancel_Dialog(None, title='My Title', msg=msg)
+	dialog = wx_utils.OK_Cancel_Dialog(None, title='My Title', msg=msg)
 
 	def click_OK():
 		click_event = wx.CommandEvent(wx.EVT_BUTTON.typeId, wx.ID_OK)
@@ -200,7 +200,7 @@ def test_OK_Cancel_Dialog_with_Cancel(wx_app):
 
 	msg = '\n'.join(['The quick brown fox',
 		'jumps over the lazy dog.'])
-	dialog = mywx.OK_Cancel_Dialog(None, title='My Title', msg=msg)
+	dialog = wx_utils.OK_Cancel_Dialog(None, title='My Title', msg=msg)
 
 	def click_Cancel():
 		click_event = wx.CommandEvent(wx.EVT_BUTTON.typeId, wx.ID_CANCEL)
@@ -234,7 +234,7 @@ def test_OK_Cancel_Dialog_with_Close(wx_app):
 
 	msg = '\n'.join(['The quick brown fox',
 		'jumps over the lazy dog.'])
-	dialog = mywx.OK_Cancel_Dialog(None, title='My Title', msg=msg)
+	dialog = wx_utils.OK_Cancel_Dialog(None, title='My Title', msg=msg)
 
 	# CallAfter is a function used to schedule a callable to be executed
 	# on the main GUI thread after the current event hander and any

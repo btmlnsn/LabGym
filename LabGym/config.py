@@ -46,7 +46,7 @@ except ModuleNotFoundError:
 import yaml  # PyYAML, YAML parser and emitter for Python
 
 # Local application/library specific imports.
-from LabGym import myargparse
+from .utils import cli
 
 
 defaults = {
@@ -83,7 +83,7 @@ _cached_config = None
 def get_config_from_argv() -> dict:
 	"""Get config values from command-line args."""
 
-	result = myargparse.parse_args()
+	result = cli.parse_args()
 
 	return result
 

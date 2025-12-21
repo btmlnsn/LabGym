@@ -59,8 +59,8 @@ Example 1
 	import logging
 
 	# Configure the logging system.
-	from LabGym.mylogging import mylogging
-	mylogging.config()
+	from LabGym.logging_config import logging_config
+	logging_config.config()
 
 	logger = logging.getLogger(__name__)
 	logger.debug('Milestone')
@@ -78,16 +78,16 @@ Example 2, Log the loading of this module, and configure the logging system.
 	# this module before other import statements are executed and
 	# potentially produce their own log messages.
 
-	from LabGym import mylogging
+	from LabGym.utils import logging_config
 	# Collect logrecords and defer handling until logging is configured.
-	mylogging.defer()
+	logging_config.defer()
 
 	# Log the loading of this module (by the module loader, on first import).
 	logger = logging.getLogger(__name__)
 	logger.debug('loading %s', __file__)
 
 	# Configure logging based on configfile, then handle collected logrecords.
-	mylogging.configure()
+	logging_config.configure()
 
 	# Related third party imports.
 	...
@@ -121,7 +121,7 @@ from typing import Dict, List
 import yaml  # PyYAML, YAML parser and emitter for Python
 
 # Local application/library specific imports.
-from LabGym import config
+from .. import config
 
 
 logger = logging.getLogger(__name__)

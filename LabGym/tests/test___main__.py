@@ -8,7 +8,7 @@ import time
 from packaging import version
 
 # Deliberately importing __main__ inside test functions instead of here.
-# Why?  Because (1) must patch mylogging.configure before importing
+# Why?  Because (1) must patch logging_config.configure before importing
 # __main__, (2) want to time the import and report that duration from a
 # test function (duration is significant, ~30 sec?).
 # from LabGym import __main__
@@ -31,9 +31,9 @@ logger = logging.getLogger(__name__)
 
 def test_main(monkeypatch):
 	# Arrange
-	# patch configure, in mylogging, *before* importing __main__
-	from LabGym import mylogging
-	monkeypatch.setattr(mylogging, 'configure', lambda *args: None)
+	# patch configure, in logging_config, *before* importing __main__
+	from LabGym.utils import logging_config
+	monkeypatch.setattr(logging_config, 'configure', lambda *args: None)
 
 	from LabGym import __main__
 	monkeypatch.setattr(__main__.probes, 'probes', lambda: None)
@@ -51,9 +51,9 @@ def test_main(monkeypatch):
 
 def test_main_current_labgym(monkeypatch):
 	# Arrange
-	# patch configure, in mylogging, *before* importing __main__
-	from LabGym import mylogging
-	monkeypatch.setattr(mylogging, 'configure', lambda *args: None)
+	# patch configure, in logging_config, *before* importing __main__
+	from LabGym.utils import logging_config
+	monkeypatch.setattr(logging_config, 'configure', lambda *args: None)
 
 	from LabGym import __main__
 	return_values = [
@@ -77,9 +77,9 @@ def test_main_current_labgym(monkeypatch):
 
 def test_main_stale_labgym(monkeypatch):
 	# Arrange
-	# patch configure, in mylogging, *before* importing __main__
-	from LabGym import mylogging
-	monkeypatch.setattr(mylogging, 'configure', lambda *args: None)
+	# patch configure, in logging_config, *before* importing __main__
+	from LabGym.utils import logging_config
+	monkeypatch.setattr(logging_config, 'configure', lambda *args: None)
 
 	from LabGym import __main__
 	return_values = [

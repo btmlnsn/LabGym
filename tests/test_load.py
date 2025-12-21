@@ -54,7 +54,7 @@ def test_imports_with_sysargv_initialized(monkeypatch):
 	These module imports must be tested with sys.argv initialized.
 	"""
 	# Arrange sys.argv.  Otherwise sys.argv contains pytest args, and
-	# myargparse raises an exception.
+	# cli.py raises an exception.
 	monkeypatch.setattr(sys, 'argv', ['dummy'])
 
 	# Act
@@ -62,9 +62,9 @@ def test_imports_with_sysargv_initialized(monkeypatch):
 	import LabGym.__main__
 	submodules.remove('__main__')
 
-	logging.info('import LabGym.myargparse')
-	import LabGym.myargparse
-	submodules.remove('myargparse')
+	logging.info('import LabGym.utils.cli')
+	import LabGym.utils.cli
+	submodules.remove('cli')
 
 
 def test_remainder():
