@@ -34,7 +34,7 @@ from PIL import Image,ImageEnhance
 import wx
 
 # Local application/library specific imports.
-from .tools import preprocess_video
+from ..tools import preprocess_video
 
 
 class PanelLv2_ProcessVideos(wx.Panel):

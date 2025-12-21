@@ -27,6 +27,14 @@ from .config import config, central_logging
 from .system import probes, survey, registration
 from .stats import minedata
 
+from .gui import main as gui_main
+from .gui import analyzer as gui_analyzer
+from .gui import categorizer as gui_categorizer
+from .gui import detector as gui_detector
+from .gui import preprocessor as gui_preprocessor
+from .gui import utils as gui_utils
+from .gui import app_icon as gui_app_icon
+
 
 __all__ = [
     '__version__',
@@ -39,4 +47,11 @@ __all__ = [
     'probes',
     'survey',
     'minedata',
+    'gui_main',
+    'gui_analyzer',
+    'gui_categorizer',
+    'gui_detector',
+    'gui_preprocessor',
+    'gui_utils',
+    'gui_app_icon',
 ]

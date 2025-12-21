@@ -36,11 +36,11 @@ import torch
 import wx
 
 # Local application/library specific imports.
-from .analyzebehavior import AnalyzeAnimal
-from .analyzebehavior_dt import AnalyzeAnimalDetector
+from ..analyzebehavior import AnalyzeAnimal
+from ..analyzebehavior_dt import AnalyzeAnimalDetector
 from LabGym.config import config
 from LabGym.stats.minedata import data_mining
-from .tools import plot_events, parse_all_events_file, calculate_distances
+from ..tools import plot_events, parse_all_events_file, calculate_distances
 
 
 class ColorPicker(wx.Dialog):

@@ -20,7 +20,7 @@ Email: bingye@umich.edu
 # Standard library imports.
 import logging
 import sys
-from .gui_app_icon import set_frame_icon, setup_application_icons
+from .app_icon import set_frame_icon, setup_application_icons
 
 # Log the load of this module (by the module loader, on first import).
 # Intentionally positioning these statements before other imports, against the
@@ -35,13 +35,13 @@ import wx.lib.agw.hyperlink as hl
 
 # Local application/library specific imports.
 from LabGym import __version__
-from .gui_utils import add_or_select_notebook_page
-logger.debug('importing %s ...', '.gui_categorizer')
-from .gui_categorizer import PanelLv2_GenerateExamples,PanelLv2_TrainCategorizers,PanelLv2_SortBehaviors,PanelLv2_TestCategorizers
-logger.debug('importing %s done', '.gui_categorizer')
-from .gui_detector import PanelLv2_GenerateImages,PanelLv2_TrainDetectors,PanelLv2_TestDetectors
-from .gui_preprocessor import PanelLv2_ProcessVideos,PanelLv2_DrawMarkers
-from .gui_analyzer import PanelLv2_AnalyzeBehaviors,PanelLv2_MineResults,PanelLv2_PlotBehaviors,PanelLv2_CalculateDistances
+from .utils import add_or_select_notebook_page
+logger.debug('importing %s ...', '.categorizer')
+from .categorizer import PanelLv2_GenerateExamples,PanelLv2_TrainCategorizers,PanelLv2_SortBehaviors,PanelLv2_TestCategorizers
+logger.debug('importing %s done', '.categorizer')
+from .detector import PanelLv2_GenerateImages,PanelLv2_TrainDetectors,PanelLv2_TestDetectors
+from .preprocessor import PanelLv2_ProcessVideos,PanelLv2_DrawMarkers
+from .analyzer import PanelLv2_AnalyzeBehaviors,PanelLv2_MineResults,PanelLv2_PlotBehaviors,PanelLv2_CalculateDistances
 
 
 
