@@ -42,7 +42,9 @@ logger.debug('importing %s done', '..core.analyzebehavior')
 logger.debug('importing %s ...', '..core.analyzebehavior_dt')
 from ..core.analyzebehavior_dt import AnalyzeAnimalDetector
 logger.debug('importing %s done', '..core.analyzebehavior_dt')
-from ..core.categorizer import Categorizers
+from LabGym.workflows.training.categorizer.train import CategorizerTrainer
+from LabGym.workflows.evaluation.categorizer import Categorizer
+logger.debug('importing %s done', '..workflows.evaluation.categorizer')
 from LabGym.config import config
 from LabGym.io.filesystem import sort_examples_from_csv
 from .utils import add_or_select_notebook_page
@@ -1241,7 +1243,7 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 		if self.file_path is None or self.new_path is None:
 			wx.MessageBox('Please select a folder that stores the sorted examples /\na new folder to store prepared training examples!','Error',wx.OK|wx.ICON_ERROR)
 		else:
-			CA=Categorizers()
+			CA=CategorizerTrainer()
 			CA.rename_label(self.file_path,self.new_path,resize=self.resize)
 
 
@@ -1554,7 +1556,7 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 				dialog.Destroy()
 
 			if do_nothing is False:
-				CA=Categorizers()
+				CA=CategorizerTrainer()
 				if self.animation_analyzer is False:
 					if self.behavior_mode>=3:
 						self.length=self.std=0
@@ -1713,8 +1715,8 @@ class PanelLv2_TestCategorizers(wx.Panel):
 		if self.file_path is None or self.path_to_categorizer is None:
 			wx.MessageBox('No Categorizer selected / path to ground-truth behavior examples.','Error',wx.OK|wx.ICON_ERROR)
 		else:
-			CA=Categorizers()
-			CA.test_categorizer(self.file_path,self.path_to_categorizer,result_path=self.out_path)
+			CA=Categorizer()
+			CA.test(self.file_path,self.path_to_categorizer,result_path=self.out_path)
 
 
 	def remove_categorizer(self,event):
