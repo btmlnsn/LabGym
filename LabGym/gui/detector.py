@@ -33,10 +33,10 @@ logger.debug('loading %s', __file__)  # pylint: disable=wrong-import-position
 # Related third party imports.
 import wx
 
-# Local application/library specific imports.
+# Local application imports.
 from LabGym.config import config
 from ..core.detector import Detector
-from ..core.tools import extract_frames
+from LabGym.io.video import extract_frames
 
 
 class PanelLv2_GenerateImages(wx.Panel):

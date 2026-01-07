@@ -40,7 +40,7 @@ import torch
 
 # Local application/library specific imports.
 from .detector import Detector
-from .tools import (
+from LabGym.io.video import (
 	crop_frame,
 	extract_blob_background,
 	extract_blob_all,
@@ -48,7 +48,7 @@ from .tools import (
 	generate_patternimage,
 	generate_patternimage_all,
 	generate_patternimage_interact,
-	)
+)
 
 
 class AnalyzeAnimalDetector():

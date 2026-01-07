@@ -44,8 +44,8 @@ from keras.models import load_model
 from keras.utils import img_to_array
 
 # Local application/library specific imports.
-logger.debug('importing tools (starting...)')
-from .tools import (
+logger.debug('importing video IO tools (starting...)')
+from LabGym.io.video import (
 	estimate_constants,
 	crop_frame,
 	extract_blob_background,

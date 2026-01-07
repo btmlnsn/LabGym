@@ -33,8 +33,8 @@ import numpy as np
 from PIL import Image,ImageEnhance
 import wx
 
-# Local application/library specific imports.
-from ..core.tools import preprocess_video
+# Local application imports.
+from LabGym.io.video import preprocess_video
 
 
 class PanelLv2_ProcessVideos(wx.Panel):
