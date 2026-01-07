@@ -39,7 +39,7 @@ from keras.utils import img_to_array
 import torch
 
 # Local application/library specific imports.
-from .detector import Detector
+from LabGym.workflows.evaluation.detector import Detector
 from LabGym.io.video import (
 	crop_frame,
 	extract_blob_background,

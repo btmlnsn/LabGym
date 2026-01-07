@@ -35,7 +35,8 @@ import wx
 
 # Local application imports.
 from LabGym.config import config
-from ..core.detector import Detector
+from LabGym.workflows.evaluation.detector import Detector
+from LabGym.workflows.training.detector.train import DetectorTrainer
 from LabGym.io.video import extract_frames
 
 
