@@ -36,12 +36,9 @@ import numpy as np
 import wx
 
 # Local application imports.
-logger.debug('importing %s ...', '..core.analyzebehavior')
-from ..core.analyzebehavior import AnalyzeAnimal
-logger.debug('importing %s done', '..core.analyzebehavior')
-logger.debug('importing %s ...', '..core.analyzebehavior_dt')
-from ..core.analyzebehavior_dt import AnalyzeAnimalDetector
-logger.debug('importing %s done', '..core.analyzebehavior_dt')
+logger.debug('importing %s ...', 'LabGym.workflows.analysis.analyze_behaviors')
+from LabGym.workflows.analysis.analyze_behaviors import AnalyzeAnimal, AnalyzeAnimalDetector
+logger.debug('importing %s done', 'LabGym.workflows.analysis.analyze_behaviors')
 from LabGym.workflows.training.categorizer.train import CategorizerTrainer
 from LabGym.workflows.evaluation.categorizer import Categorizer
 logger.debug('importing %s done', '..workflows.evaluation.categorizer')

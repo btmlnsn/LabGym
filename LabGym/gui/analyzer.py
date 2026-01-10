@@ -36,11 +36,11 @@ import torch
 import wx
 
 # Local application imports.
-from ..core.analyzebehavior import AnalyzeAnimal
-from ..core.analyzebehavior_dt import AnalyzeAnimalDetector
+from LabGym.workflows.analysis.analyze_behaviors import AnalyzeAnimal, AnalyzeAnimalDetector
 from LabGym.config import config
-from LabGym.stats.minedata import data_mining
-from ..core.tools import plot_events, calculate_distances
+from LabGym.workflows.analysis.mine_results import data_mining
+from LabGym.workflows.analysis.behavior_plot import plot_events
+from LabGym.workflows.analysis.distance_metrics import calculate_distances
 from LabGym.io.filesystem import parse_all_events_file
 
 
