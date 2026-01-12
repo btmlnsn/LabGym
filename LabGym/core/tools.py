@@ -27,26 +27,6 @@ Distance metric helpers now live in LabGym.workflows.analysis.distance_metrics
 """
 # Standard library imports.
 import warnings
-import logging
-import datetime
-import logging
-import math
-import os
-
-# Log the load of this module (by the module loader, on first import).
-# Intentionally positioning these statements before other imports, against the
-# guidance of PEP-8, to log the load before other imports log messages.
-logger =  logging.getLogger(__name__)  # pylint: disable=wrong-import-position
-logger.debug('loading %s', __file__)  # pylint: disable=wrong-import-position
-
-# Related third party imports.
-import cv2
-from matplotlib.colorbar import ColorbarBase
-from matplotlib.colors import LinearSegmentedColormap,Normalize
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-import seaborn as sb
 
 # Local application/library specific imports.
 # RE-EXPORTING LEGACY HELPER FUNCTIONS THAT WERE MOVED 
@@ -54,8 +34,6 @@ from LabGym.io.video import *
 from LabGym.io.filesystem import *
 from LabGym.workflows.analysis.behavior_plot import *
 from LabGym.workflows.analysis.distance_metrics import *
-
-
 
 
 # DEPRECATION NOTICE

@@ -23,6 +23,7 @@ import logging
 import os
 from pathlib import Path
 import shutil
+import traceback
 
 # Log the load of this module (by the module loader, on first import).
 # Intentionally positioning these statements before other imports, against the
@@ -36,6 +37,7 @@ import wx
 # Local application imports.
 from LabGym.config import config
 from LabGym.workflows.evaluation.detector import Detector
+from LabGym.workflows.preprocessing.detector.generate_images import generate_images
 from LabGym.workflows.training.detector.train import DetectorTrainer
 from LabGym.io.video import extract_frames
 
@@ -206,23 +208,30 @@ class PanelLv2_GenerateImages(wx.Panel):
 
 			wx.MessageBox('No input video(s) / output folder selected.','Error',wx.OK|wx.ICON_ERROR)
 
-		else:
+			return
 
-			do_nothing=True
+		if wx.MessageDialog(self, "Start to generate image examples?",
+                        "Start?", wx.YES_NO | wx.ICON_QUESTION).ShowModal() != wx.ID_YES:
+			return
+		try:
+			generate_images(
+				videos=self.path_to_videos,
+				out_dir=self.result_path,
+				framewidth=self.framewidth,
+				start_t=self.t,
+				duration=self.duration,
+				skip=self.skip_redundant,
+			)
+		except Exception:                           # noqa: BLE001
+			logging.exception("generate_images failed")
+			wx.MessageBox(traceback.format_exc(), "Generation failed",
+						wx.OK | wx.ICON_ERROR)
+			return
+		wx.MessageBox("Image example generation completed!",
+					"Done", wx.OK | wx.ICON_INFORMATION)
 
-			dialog=wx.MessageDialog(self,'Start to generate image examples?','Start to generate examples?',wx.YES_NO|wx.ICON_QUESTION)
-			if dialog.ShowModal()==wx.ID_YES:
-				do_nothing=False
-			else:
-				do_nothing=True
-			dialog.Destroy()
 
-			if do_nothing is False:
-				print('Generating image examples...')
-				for i in self.path_to_videos:
-					extract_frames(i,self.result_path,framewidth=self.framewidth,start_t=self.t,duration=self.duration,skip_redundant=self.skip_redundant)
-				print('Image example generation completed!')
-
+			
 
 
 class PanelLv2_TrainDetectors(wx.Panel):

@@ -23,6 +23,7 @@ import logging
 import os
 from pathlib import Path
 import shutil
+import traceback
 
 # Log the load of this module (by the module loader, on first import).
 # Intentionally positioning these statements before other imports, against the
@@ -45,6 +46,7 @@ logger.debug('importing %s done', '..workflows.evaluation.categorizer')
 from LabGym.config import config
 from LabGym.io.filesystem import sort_examples_from_csv
 from .utils import add_or_select_notebook_page
+from LabGym.workflows.preprocessing.categorizer.generate_examples import generate_examples
 
 
 class PanelLv2_GenerateExamples(wx.Panel):
@@ -622,59 +624,43 @@ class PanelLv2_GenerateExamples(wx.Panel):
 
 				if do_nothing is False:
 
-					for i in self.path_to_videos:
+					try:
+						generate_examples(
+							videos = self.path_to_videos,
+							out_dir = self.result_path,
+							behavior_mode = self.behavior_mode,
+							use_detector = self.use_detector,
+							detector_path = self.path_to_detector,
+							animal_kinds = self.animal_kinds,
+							framewidth = self.framewidth,
+							delta = self.delta,
+							decode_animalnumber = self.decode_animalnumber,
+							animal_number = self.animal_number,
+							autofind_t = self.autofind_t,
+							t = self.t,
+							duration = self.duration,
+							ex_start = self.ex_start,
+							ex_end = self.ex_end,
+							length = self.length,
+							include_bodyparts = self.include_bodyaprts,
+							std = self.std,
+							background_free = self.background_free,
+							black_background = self.black_background,
+							skip_redundant = self.skip_redundant,
+							social_distance = self.social_distance,
+							stable_illumination = self.stable_illumination,
+							background_path = self.background_path,
+							detection_threshold = self.detection_threshold,
+						)
 
-						filename=os.path.splitext(os.path.basename(i))[0].split('_')
-						if self.decode_animalnumber:
-							if self.use_detector:
-								self.animal_number={}
-								number=[x[1:] for x in filename if len(x)>1 and x[0]=='n']
-								for a,animal_name in enumerate(self.animal_kinds):
-									self.animal_number[animal_name]=int(number[a])
-							else:
-								for x in filename:
-									if len(x)>1:
-										if x[0]=='n':
-											self.animal_number=int(x[1:])
-						if self.decode_t:
-							for x in filename:
-								if len(x)>1:
-									if x[0]=='b':
-										self.t=float(x[1:])
-						if self.decode_extraction:
-							for x in filename:
-								if len(x)>2:
-									if x[:2]=='xs':
-										self.ex_start=int(x[2:])
-									if x[:2]=='xe':
-										self.ex_end=int(x[2:])
-
-						if self.animal_number is None:
-							if self.use_detector:
-								self.animal_number={}
-								for animal_name in self.animal_kinds:
-									self.animal_number[animal_name]=1
-							else:
-								self.animal_number=1
-
-						if self.use_detector is False:
-							AA=AnalyzeAnimal()
-							AA.prepare_analysis(i,self.result_path,self.animal_number,delta=self.delta,framewidth=self.framewidth,stable_illumination=self.stable_illumination,channel=3,include_bodyparts=self.include_bodyparts,std=self.std,categorize_behavior=False,animation_analyzer=False,path_background=self.background_path,autofind_t=self.autofind_t,t=self.t,duration=self.duration,ex_start=self.ex_start,ex_end=self.ex_end,length=self.length,animal_vs_bg=self.animal_vs_bg)
-							if self.behavior_mode==0:
-								AA.generate_data(background_free=self.background_free,black_background=self.black_background,skip_redundant=self.skip_redundant)
-							else:
-								AA.generate_data_interact_basic(background_free=self.background_free,black_background=self.black_background,skip_redundant=self.skip_redundant)
-						else:
-							AAD=AnalyzeAnimalDetector()
-							AAD.prepare_analysis(self.path_to_detector,i,self.result_path,self.animal_number,self.animal_kinds,self.behavior_mode,framewidth=self.framewidth,channel=3,include_bodyparts=self.include_bodyparts,std=self.std,categorize_behavior=False,animation_analyzer=False,t=self.t,duration=self.duration,length=self.length,social_distance=self.social_distance)
-							if self.behavior_mode==0:
-								AAD.generate_data(background_free=self.background_free,black_background=self.black_background,skip_redundant=self.skip_redundant)
-							elif self.behavior_mode==1:
-								AAD.generate_data_interact_basic(background_free=self.background_free,black_background=self.black_background,skip_redundant=self.skip_redundant)
-							else:
-								AAD.generate_data_interact_advance(background_free=self.background_free,black_background=self.black_background,skip_redundant=self.skip_redundant)
-
-
+					except Exception:
+						logging.exception("generate_examples failed")
+						wx.MessageBox(
+							traceback.format_exc(),
+							"Example generation failed",
+							wx.OK | wx.ICON_ERROR,
+						)
+						return
 
 class PanelLv2_SortBehaviors(wx.Panel):
 
