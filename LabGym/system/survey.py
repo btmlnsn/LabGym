@@ -132,7 +132,7 @@ def dict2str(arg: dict, hanging_indent: str=' '*16) -> str:
 	return result
 
 
-def get_list_of_subdirs(parent_dir: str|Path) -> List[str]:
+def get_list_of_subdirs(parent_dir: str|Path) -> list[str]:
 	"""Return a sorted list of strings of the names of the child dirs.
 
 	... excluding __pycache__.
@@ -313,13 +313,12 @@ def survey(
 	if external_userdata_dirs:
 		if 'detectors' in external_userdata_dirs.keys():
 			 # contents of LabGym/detectors are orphans
-			 old = Path(labgym_dir) / 'detectors' # old userdata dir
-			 orphans.extend([
-				 str(old / subdir) for subdir in get_list_of_subdirs(old)])
+			old = Path(labgym_dir) / 'detectors' # old userdata dir
+			orphans.extend([str(old / subdir) for subdir in get_list_of_subdirs(old)])
 		if 'models' in external_userdata_dirs.keys():
 			 # contents of LabGym/modelsare orphans
-			 old = Path(labgym_dir) / 'models' # old userdata dir
-			 orphans.extend([
+			old = Path(labgym_dir) / 'models' # old userdata dir
+			orphans.extend([
 				 str(old / subdir) for subdir in get_list_of_subdirs(old)])
 
 	if orphans:

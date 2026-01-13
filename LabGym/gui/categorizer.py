@@ -37,6 +37,7 @@ import numpy as np
 import wx
 
 # Local application imports.
+from LabGym.domain.project import ProjectPaths
 logger.debug('importing %s ...', 'LabGym.workflows.analysis.analyze_behaviors')
 from LabGym.workflows.analysis.analyze_behaviors import AnalyzeAnimal, AnalyzeAnimalDetector
 logger.debug('importing %s done', 'LabGym.workflows.analysis.analyze_behaviors')
@@ -1070,7 +1071,7 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 		self.data_path=None # the folder that stores prepared behavior examples
 		self.model_path = self.config['models']  # the 'LabGym/models' folder, which stores all the trained Categorizers
 		logger.debug('%s: %r', 'self.model_path', self.model_path)
-		self.path_to_categorizer = os.path.join(self.config['models'], 'New_model')  # path to the Categorizer
+		self.path_to_categorizer = ProjectPaths.models / 'New_model' # path to the Categorizer
 		logger.debug('%s: %r', 'self.path_to_categorizer', self.path_to_categorizer)
 		self.out_path=None # the folder for storing the training reports
 		self.include_bodyparts=False # whether to include body parts in the pattern images
