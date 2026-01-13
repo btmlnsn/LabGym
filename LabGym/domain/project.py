@@ -57,5 +57,6 @@ ProjectPaths.models    = Path(_cfg.get("models",    ProjectPaths._defaults["mode
 # auto-create folders
 ProjectPaths.ensure()
 
-__all__ = ["ProjectPaths"]
 
+
+__all__ = ["ProjectPaths"]

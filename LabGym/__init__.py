@@ -22,11 +22,10 @@ Email: bingye@umich.edu
 __version__='2.9.6'
 
 
-from .core import analyzebehavior, analyzebehavior_dt, categorizer, detector, tools
+
 from .utils import cli, logging_config, resource_loader, wx_utils
 from .config import config, central_logging
 from .system import probes, survey, registration
-from .stats import minedata
 
 from .gui import main as gui_main
 from .gui import analyzer as gui_analyzer
@@ -35,6 +34,11 @@ from .gui import detector as gui_detector
 from .gui import preprocessor as gui_preprocessor
 from .gui import utils as gui_utils
 from .gui import app_icon as gui_app_icon
+
+from .workflows import preprocessing as workflows_preprocessing
+from .workflows import training as workflows_training
+from .workflows import evaluation as workflows_evaluation
+from .workflows import analysis as workflows_analysis
 
 
 __all__ = [
@@ -47,7 +51,7 @@ __all__ = [
     'central_logging',
     'probes',
     'survey',
-    'minedata',
+    'registration',
     'gui_main',
     'gui_analyzer',
     'gui_categorizer',
@@ -55,9 +59,8 @@ __all__ = [
     'gui_preprocessor',
     'gui_utils',
     'gui_app_icon',
-    'analyzebehavior',
-    'analyzebehavior_dt',
-    'categorizer',
-    'detector',
-    'tools',
+    'workflows_preprocessing',
+    'workflows_training',
+    'workflows_evaluation',
+    'workflows_analysis',
 ]
