@@ -38,16 +38,17 @@ import wx
 
 # Local application imports.
 from LabGym.domain.project import ProjectPaths
-logger.debug('importing %s ...', 'LabGym.workflows.analysis.analyze_behaviors')
-from LabGym.workflows.analysis.analyze_behaviors import AnalyzeAnimal, AnalyzeAnimalDetector
-logger.debug('importing %s done', 'LabGym.workflows.analysis.analyze_behaviors')
-from LabGym.workflows.training.categorizer.train import CategorizerTrainer
-from LabGym.workflows.evaluation.categorizer import Categorizer
-logger.debug('importing %s done', '..workflows.evaluation.categorizer')
+logger.debug('importing %s ...', 'LabGym.app.analyze.behaviors')
+from LabGym.app.analyze.behaviors import AnalyzeAnimal, AnalyzeAnimalDetector
+logger.debug('importing %s done', 'LabGym.app.analyze.behaviors')
+from LabGym.app.train.categorizer import run as train_categorizer
+from LabGym.app.evaluate.categorizer import run as evaluate_categorizer
+logger.debug('importing %s done', 'LabGym.app.evaluate.categorizer')
 from LabGym.config import config
 from LabGym.io.filesystem import sort_examples_from_csv
 from .utils import add_or_select_notebook_page
-from LabGym.workflows.preprocessing.categorizer.generate_examples import generate_examples
+logger.debug('importing %s done', 'LabGym.app.data.generate_examples')
+from LabGym.app.data.generate_examples import run as generate_examples
 
 
 class PanelLv2_GenerateExamples(wx.Panel):
@@ -1227,7 +1228,7 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 		if self.file_path is None or self.new_path is None:
 			wx.MessageBox('Please select a folder that stores the sorted examples /\na new folder to store prepared training examples!','Error',wx.OK|wx.ICON_ERROR)
 		else:
-			CA=CategorizerTrainer()
+			CA=train_categorizer()
 			CA.rename_label(self.file_path,self.new_path,resize=self.resize)
 
 
@@ -1540,7 +1541,7 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 				dialog.Destroy()
 
 			if do_nothing is False:
-				CA=CategorizerTrainer()
+				CA=train_categorizer()
 				if self.animation_analyzer is False:
 					if self.behavior_mode>=3:
 						self.length=self.std=0
@@ -1699,7 +1700,7 @@ class PanelLv2_TestCategorizers(wx.Panel):
 		if self.file_path is None or self.path_to_categorizer is None:
 			wx.MessageBox('No Categorizer selected / path to ground-truth behavior examples.','Error',wx.OK|wx.ICON_ERROR)
 		else:
-			CA=Categorizer()
+			CA=evaluate_categorizer()
 			CA.test(self.file_path,self.path_to_categorizer,result_path=self.out_path)
 
 

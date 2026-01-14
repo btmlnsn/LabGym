@@ -36,11 +36,11 @@ import torch
 import wx
 
 # Local application imports.
-from LabGym.workflows.analysis.analyze_behaviors import AnalyzeAnimal, AnalyzeAnimalDetector
+from LabGym.app.analyze.behaviors import AnalyzeAnimal, AnalyzeAnimalDetector
 from LabGym.config import config
-from LabGym.workflows.analysis.mine_results import data_mining
-from LabGym.workflows.analysis.behavior_plot import plot_events
-from LabGym.workflows.analysis.distance_metrics import calculate_distances
+from LabGym.app.analyze.mine_results import run as mine_results
+from LabGym.workflows.analysis.behavior_plot import plot_events # wrap later in app.analyze ?
+from LabGym.workflows.analysis.distance_metrics import calculate_distances # wrap later in app.analyze ?
 from LabGym.io.filesystem import parse_all_events_file
 
 
@@ -1276,7 +1276,7 @@ class PanelLv2_MineResults(wx.Panel):
 
 			self.read_all_folders()
 			self.control_organization()
-			DM=data_mining(self.dataset,self.control,self.paired,self.result_path,self.pval,self.file_names)
+			DM=mine_results(self.dataset,self.control,self.paired,self.result_path,self.pval,self.file_names)
 			DM.statistical_analysis()
 
 

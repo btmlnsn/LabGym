@@ -36,10 +36,12 @@ import wx
 
 # Local application imports.
 from LabGym.config import config
-from LabGym.workflows.evaluation.detector import Detector
-from LabGym.workflows.preprocessing.detector.generate_images import generate_images
-from LabGym.workflows.training.detector.train import DetectorTrainer
-from LabGym.io.video import extract_frames
+logger.debug('importing %s ...', 'LabGym.app.evaluate.detector')
+from LabGym.app.evaluate.detector import run as evaluate_detector
+logger.debug('importing %s ...', 'LabGym.app.data.generate_images')
+from LabGym.app.data.generate_images import run as generate_images
+logger.debug('importing %s done', 'LabGym.app.train.detector')
+from LabGym.app.train.detector import run as train_detector
 
 
 class PanelLv2_GenerateImages(wx.Panel):
@@ -388,7 +390,7 @@ class PanelLv2_TrainDetectors(wx.Panel):
 
 			if do_nothing is False:
 
-				DT=Detector()
+				DT=train_detector()
 				DT.train(self.path_to_annotation,self.path_to_trainingimages,self.path_to_detector,self.iteration_num,self.inference_size)
 
 
@@ -544,7 +546,7 @@ class PanelLv2_TestDetectors(wx.Panel):
 		if self.path_to_detector is None or self.path_to_testingimages is None or self.path_to_annotation is None or self.output_path is None:
 			wx.MessageBox('No Detector / training images / annotation file / output path selected.','Error',wx.OK|wx.ICON_ERROR)
 		else:
-			DT=Detector()
+			DT=evaluate_detector()
 			DT.test(self.path_to_annotation,self.path_to_testingimages,self.path_to_detector,self.output_path)
 
 
