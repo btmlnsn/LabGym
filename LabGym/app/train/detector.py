@@ -6,7 +6,7 @@ from __future__ import annotations
 
 # Local application imports
 from LabGym.app.context import ProgressCallback, noop_progress
-from LabGym.workflows.training.detector.train import DetectorTrainer
+from LabGym.subsystems.detection.api import train as DetectorTrainer
 
 
 def run(
@@ -31,4 +31,5 @@ def run(
         inference_size,
     )
 
-    on_progress(100, "Detector training complete")
+    on_progress(100, "Detector training")
+

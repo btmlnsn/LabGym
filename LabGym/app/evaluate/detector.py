@@ -6,7 +6,7 @@ from __future__ import annotations
 
 # Local application imports
 from LabGym.app.context import ProgressCallback, noop_progress
-from LabGym.workflows.evaluation.detector import Detector
+from LabGym.subsystems.detection.api import evaluate as Detector
 
 
 def run(
