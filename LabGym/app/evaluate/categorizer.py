@@ -6,7 +6,7 @@ from __future__ import annotations
 
 # Local application imports
 from LabGym.app.context import ProgressCallback, noop_progress
-from LabGym.workflows.evaluation.categorizer import Categorizer
+from LabGym.subsystems.categorization.api import evaluate as Categorizer
 
 
 def run(

@@ -1,5 +1,5 @@
 """
-LabGym.workflows.preprocessing.categorizer.generate_examples
+LabGym.subsystems.data_generation.generate_examples
 
 Generate behavior examples for categorizer training
 Safe to import from any layer; no GUI dependencies.
@@ -15,7 +15,7 @@ from typing import Iterable, Sequence
 
 # Local application imports
 # heavy workflows for analysis
-from LabGym.workflows.analysis.analyze_behaviors import (
+from LabGym.subsystems.categorization.predict import (
     AnalyzeAnimal,
     AnalyzeAnimalDetector,
 )

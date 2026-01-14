@@ -6,7 +6,7 @@ from __future__ import annotations
 
 # Local application imports
 from LabGym.app.context import ProgressCallback, noop_progress
-from LabGym.workflows.analysis.analyze_behaviors import AnalyzeAnimal, AnalyzeAnimalDetector
+from LabGym.subsystems.categorization.predict import AnalyzeAnimal, AnalyzeAnimalDetector
 
 
 def run_background_subtraction(

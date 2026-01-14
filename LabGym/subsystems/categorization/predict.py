@@ -35,7 +35,7 @@ from keras.utils import img_to_array
 import torch
 
 # Local application imports
-from LabGym.workflows.evaluation.detector import Detector
+from LabGym.subsystems.detection.api import evaluate as Detector
 logger.debug('importing video IO tools (starting...)')
 from LabGym.io.video import(
     estimate_constants,

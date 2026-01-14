@@ -1,5 +1,5 @@
 """
-LabGym.workflows.evaluation.categorizer
+LabGym.subsystems.categorization.eval
 
 This module implements the categorizer evaluation / inference workflow.
 """
@@ -54,7 +54,7 @@ from keras.utils import (
 )
 
 # Local application imports
-from LabGym.workflows.training.categorizer.train import (
+from LabGym.subsystems.categorization.train import (
     DatasetFromPath,
     DatasetFromPath_AA,
 )

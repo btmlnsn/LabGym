@@ -35,10 +35,7 @@ from .gui import preprocessor as gui_preprocessor
 from .gui import utils as gui_utils
 from .gui import app_icon as gui_app_icon
 
-from .workflows import preprocessing as workflows_preprocessing
-from .workflows import training as workflows_training
-from .workflows import evaluation as workflows_evaluation
-from .workflows import analysis as workflows_analysis
+
 
 
 __all__ = [
@@ -59,8 +56,4 @@ __all__ = [
     'gui_preprocessor',
     'gui_utils',
     'gui_app_icon',
-    'workflows_preprocessing',
-    'workflows_training',
-    'workflows_evaluation',
-    'workflows_analysis',
 ]

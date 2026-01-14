@@ -10,7 +10,7 @@ from typing import Iterable
 
 # Local application imports
 from LabGym.app.context import ProgressCallback, noop_progress
-from LabGym.workflows.preprocessing.categorizer.generate_examples import generate_examples
+from LabGym.subsystems.data_generation.api import generate_examples
 
 
 def run(

@@ -1,5 +1,5 @@
 """
-LabGym.workflows.training.categorizer.train
+LabGym.subsystems.categorization.train
 
 This module implements the categorizer-training workflow.
 SAFE TO IMPORT from any layer; no GUI dependencies.
