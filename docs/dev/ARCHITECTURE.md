@@ -1,31 +1,15 @@
-# LabGym Architecture (Draft)
+# LabGym - Architecture Guard-rails (Draft)
 
-Layers
--------
-
-GUI (wxPython)
-└─ app.registry           – GUI ⇄ workflow routing
-   └─ workflows.<step>    – preprocessing, training, …
-      └─ domain           – pure domain objects
-         └─ io            – FS / video / spreadsheets
-            └─ utils      – generic helpers
-      └─ ml               – low-level ML (Detectron2, …)
+The codebase is divided into concentric layers
 
 
-- GUI - where wxPython lives and why it is a thin shell
-- Workflows - orchestrates end-to-end tasks, no ML logic inside
-- Domain - pure business objects, 100% test-covered
-- ML - third-party libraries wrapped (Detectron2, Keras, ...)
-- IO - file/video helpers (FS-only, no network)
-- Utils - truly generic helpers, no LabGym imports
+Imports may only go **inward**, never outward.
 
+    Layer      |    May Import
+--------------------------------
+UI             | app, domain, config
+App            | subsystems, domain, config
+Subsystems     | subsystems.shared, domain, config
+Domain, Config | stdlib (NO wx, tensorflow, torch, cv2, detectron2, ...)
 
-Dependency Rules:
-layer            may import                must NOT import
---------------   -----------------------   -----------------------------
-GUI              workflows, domain, utils  ml
-workflows        domain, ml, utils         gui
-domain           utils                     gui, ml
-ml               utils                     gui, workflows, domain
-io               utils                     gui
-utils            (none)                    (none)
+Violations fail CI via 'import-linter' (will add at the end).
