@@ -20,7 +20,7 @@ import pandas as pd
 def calculate_distances(path_to_folder,filename,behavior_to_include,out_path):
 
 	'''
-	This function is used to calculate the shortes distance and the total
+	This function is used to calculate the shortest distance and the total
 	traveling dsitance and their ratio among the locations of the animals
 	when a selected behavior occurs for the first time.
 

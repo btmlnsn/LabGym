@@ -38,9 +38,11 @@ import wx
 # Local application imports.
 from LabGym.app.analyze import behaviors as analyze_api
 from LabGym.config import config
-from LabGym.app.analyze.mine_results import run as mine_results
-from LabGym.workflows.analysis.behavior_plot import plot_events # wrap later in app.analyze ?
-from LabGym.workflows.analysis.distance_metrics import calculate_distances # wrap later in app.analyze ?
+from LabGym.app.results import (
+	distance_metrics,
+	mine_results,
+	behavior_plot,
+)
 from LabGym.ui.bindings import gui as gui_bindings
 from LabGym.io.filesystem import parse_all_events_file
 
@@ -1233,7 +1235,10 @@ class PanelLv2_PlotBehaviors(wx.Panel):
 		if self.events_probability is None or self.time_points is None or self.results_folder is None or self.names_and_colors is None:
 			wx.MessageBox('No input file / output folder / behavior colors selected.','Error',wx.OK|wx.ICON_ERROR)
 		else:
-			plot_events(self.results_folder,self.events_probability,self.time_points,self.names_and_colors,list(self.names_and_colors.keys()))
+			behavior_plot(
+				results_path = self.results_folder,
+				behaviors = list(self.names_and_colors.keys()),
+			)
 
 
 
@@ -1365,7 +1370,11 @@ class PanelLv2_CalculateDistances(wx.Panel):
 			for filename in os.listdir(self.path_to_analysis_results):
 				filefolder=os.path.join(self.path_to_analysis_results,filename)
 				if os.path.isdir(filefolder):
-					calculate_distances(filefolder,filename,self.behavior_to_include,self.out_path)
+					distance_metrics(
+						results_path = filefolder,
+						behaviors = self.behavior_to_include,
+						video_folder_name = filename,
+					)
 
 			for file in os.listdir(self.out_path):
 				if file.endswith('_distance_calculation.xlsx') or file.endswith('_distance_calculation.xls') or file.endswith('_distance_calculation.XLSX') or file.endswith('_distance_calculation.XLS'):
