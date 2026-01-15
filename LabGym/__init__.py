@@ -27,13 +27,13 @@ from .utils import cli, logging_config, resource_loader, wx_utils
 from .config import config, central_logging
 from .system import probes, survey, registration
 
-from .gui import main as gui_main
-from .gui import analyzer as gui_analyzer
-from .gui import categorizer as gui_categorizer
-from .gui import detector as gui_detector
-from .gui import preprocessor as gui_preprocessor
-from .gui import utils as gui_utils
-from .gui import app_icon as gui_app_icon
+from .ui.gui import main as gui_main
+from .ui.gui import analyzer as gui_analyzer
+from .ui.gui import categorizer as gui_categorizer
+from .ui.gui import detector as gui_detector
+from .ui.gui import preprocessor as gui_preprocessor
+from .ui.gui import utils as gui_utils
+from .ui.gui import app_icon as gui_app_icon
 
 
 
