@@ -10,7 +10,7 @@ from typing import Sequence
 
 # Local application imports
 from LabGym.app.context import ProgressCallback, noop_progress
-from LabGym.subsystems.results import plot_events
+from LabGym.subsystems.results.api import behavior_plot
 
 
 def run(
@@ -24,7 +24,7 @@ def run(
     on_progress = on_progress or noop_progress()
     on_progress(0, "Rendering raster plot")
 
-    plot_events(
+    behavior_plot(
         result_path = str(results_path),
         event_probability = None,
         time_points = None,

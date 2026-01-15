@@ -13,6 +13,7 @@ from pathlib import Path
 # Categorization subsystem imports
 from .train import CategorizerTrainer
 from .eval import Categorizer
+from .predict import AnalyzeAnimal, AnalyzeAnimalDetector
 
 
 def train(
@@ -60,4 +61,10 @@ def predict(
     )
 
 
-__all__ = ["train", "evaluate", "predict"]
+__all__ = [
+    "train",
+    "evaluate",
+    "predict",
+    "AnalyzeAnimal",
+    "AnalyzeAnimalDetector",
+]

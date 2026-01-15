@@ -10,7 +10,7 @@ from typing import Sequence, Any
 
 # Local application imports
 from LabGym.app.context import ProgressCallback, noop_progress
-from LabGym.subsystems.results import data_mining
+from LabGym.subsystems.results.api import mine_results
 
 
 def run(
@@ -30,7 +30,7 @@ def run(
     
     on_progress(0, "Mining statistical results")
 
-    miner = data_mining(
+    miner = mine_results(
         data_in = list(data_frames),
         control_in = control_frame,
         paired_in = paired,
