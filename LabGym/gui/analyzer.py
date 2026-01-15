@@ -36,11 +36,12 @@ import torch
 import wx
 
 # Local application imports.
-from LabGym.app.analyze.behaviors import AnalyzeAnimal, AnalyzeAnimalDetector
+from LabGym.app.analyze import behaviors as analyze_api
 from LabGym.config import config
 from LabGym.app.analyze.mine_results import run as mine_results
 from LabGym.workflows.analysis.behavior_plot import plot_events # wrap later in app.analyze ?
 from LabGym.workflows.analysis.distance_metrics import calculate_distances # wrap later in app.analyze ?
+from LabGym.ui.bindings import gui as gui_bindings
 from LabGym.io.filesystem import parse_all_events_file
 
 
@@ -914,192 +915,34 @@ class PanelLv2_AnalyzeBehaviors(wx.Panel):
 
 
 	def analyze_behaviors(self,event):
-
-		if self.path_to_videos is None or self.result_path is None:
-
-			wx.MessageBox('No input video(s) / result folder.','Error',wx.OK|wx.ICON_ERROR)
-
-		else:
-
-			if self.behavior_mode==3:
-
-				if self.path_to_categorizer is None or self.path_to_detector is None:
-					wx.MessageBox('You need to select a Categorizer / Detector.','Error',wx.OK|wx.ICON_ERROR)
-				else:
-					if len(self.animal_to_include)==0:
-						self.animal_to_include=self.animal_kinds
-					if self.detector_batch<=0:
-						self.detector_batch=1
-					if self.behavior_to_include[0]=='all':
-						self.behavior_to_include=list(self.behaviornames_and_colors.keys())
-					AAD=AnalyzeAnimalDetector()
-					AAD.analyze_images_individuals(self.path_to_detector,self.path_to_videos,self.result_path,self.animal_kinds,path_to_categorizer=self.path_to_categorizer,
-						generate=False,animal_to_include=self.animal_to_include,behavior_to_include=self.behavior_to_include,names_and_colors=self.behaviornames_and_colors,
-						imagewidth=self.framewidth,dim_conv=self.dim_conv,channel=self.channel,detection_threshold=self.detection_threshold,uncertain=self.uncertain,
-						background_free=self.background_free,black_background=self.black_background,social_distance=0)
-
+		"""Start button handler"""
+		opts = gui_bindings.analyze_from_panel(self)
+		
+		# Determine pipeline and run, reporting progress
+		try:
+			if opts.use_detector:
+				analyze_api.run_detector(
+					video = str(opts.videos[0]),
+					out_dir = str(opts.output_dir),
+					animal_kinds = opts.animal_kinds,
+					detector_path = str(opts.detector_path),
+					on_progress = self.update_bar,
+					**opts.as_prepare_kwargs(),
+				)
 			else:
-
-				all_events={}
-				event_data={}
-				all_time=[]
-
-				if self.use_detector:
-					for animal_name in self.animal_kinds:
-						all_events[animal_name]={}
-					if len(self.animal_to_include)==0:
-						self.animal_to_include=self.animal_kinds
-					if self.detector_batch<=0:
-						self.detector_batch=1
-
-				if self.path_to_categorizer is None:
-					self.behavior_to_include=[]
-				else:
-					if self.behavior_to_include[0]=='all':
-						self.behavior_to_include=list(self.behaviornames_and_colors.keys())
-
-				for i in self.path_to_videos:
-
-					filename=os.path.splitext(os.path.basename(i))[0].split('_')
-					if self.decode_animalnumber:
-						if self.use_detector:
-							self.animal_number={}
-							number=[x[1:] for x in filename if len(x)>1 and x[0]=='n']
-							for a,animal_name in enumerate(self.animal_kinds):
-								self.animal_number[animal_name]=int(number[a])
-						else:
-							for x in filename:
-								if len(x)>1:
-									if x[0]=='n':
-										self.animal_number=int(x[1:])
-					if self.decode_t:
-						for x in filename:
-							if len(x)>1:
-								if x[0]=='b':
-									self.t=float(x[1:])
-					if self.decode_extraction:
-						for x in filename:
-							if len(x)>2:
-								if x[:2]=='xs':
-									self.ex_start=int(x[2:])
-								if x[:2]=='xe':
-									self.ex_end=int(x[2:])
-
-					if self.animal_number is None:
-						if self.use_detector:
-							self.animal_number={}
-							for animal_name in self.animal_kinds:
-								self.animal_number[animal_name]=1
-						else:
-							self.animal_number=1
-
-					if self.path_to_categorizer is None:
-						self.behavior_mode=0
-						categorize_behavior=False
-					else:
-						categorize_behavior=True
-
-					if self.use_detector is False:
-
-						AA=AnalyzeAnimal()
-						AA.prepare_analysis(i,self.result_path,self.animal_number,delta=self.delta,names_and_colors=self.behaviornames_and_colors,
-							framewidth=self.framewidth,stable_illumination=self.stable_illumination,dim_tconv=self.dim_tconv,dim_conv=self.dim_conv,channel=self.channel,
-							include_bodyparts=self.include_bodyparts,std=self.std,categorize_behavior=categorize_behavior,animation_analyzer=self.animation_analyzer,
-							path_background=self.background_path,autofind_t=self.autofind_t,t=self.t,duration=self.duration,ex_start=self.ex_start,ex_end=self.ex_end,
-							length=self.length,animal_vs_bg=self.animal_vs_bg)
-						if self.behavior_mode==0:
-							AA.acquire_information(background_free=self.background_free,black_background=self.black_background)
-							AA.craft_data()
-							interact_all=False
-						else:
-							AA.acquire_information_interact_basic(background_free=self.background_free,black_background=self.black_background)
-							interact_all=True
-						if self.path_to_categorizer is not None:
-							AA.categorize_behaviors(self.path_to_categorizer,uncertain=self.uncertain,min_length=self.min_length)
-						AA.annotate_video(self.ID_colors,self.behavior_to_include,show_legend=self.show_legend,interact_all=interact_all)
-						AA.export_results(normalize_distance=self.normalize_distance,parameter_to_analyze=self.parameter_to_analyze)
-
-						if self.path_to_categorizer is not None:
-							for n in AA.event_probability:
-								all_events[len(all_events)]=AA.event_probability[n]
-							if len(all_time)<len(AA.all_time):
-								all_time=AA.all_time
-
-					else:
-
-						AAD=AnalyzeAnimalDetector()
-						AAD.prepare_analysis(self.path_to_detector,i,self.result_path,self.animal_number,self.animal_kinds,self.behavior_mode,
-							names_and_colors=self.behaviornames_and_colors,framewidth=self.framewidth,dim_tconv=self.dim_tconv,dim_conv=self.dim_conv,channel=self.channel,
-							include_bodyparts=self.include_bodyparts,std=self.std,categorize_behavior=categorize_behavior,animation_analyzer=self.animation_analyzer,
-							t=self.t,duration=self.duration,length=self.length,social_distance=self.social_distance)
-						if self.behavior_mode==1:
-							AAD.acquire_information_interact_basic(batch_size=self.detector_batch,background_free=self.background_free,black_background=self.black_background)
-						else:
-							AAD.acquire_information(batch_size=self.detector_batch,background_free=self.background_free,black_background=self.black_background)
-						if self.behavior_mode!=1:
-							AAD.craft_data()
-						if self.path_to_categorizer is not None:
-							AAD.categorize_behaviors(self.path_to_categorizer,uncertain=self.uncertain,min_length=self.min_length)
-						if self.correct_ID:
-							AAD.correct_identity(self.specific_behaviors)
-						AAD.annotate_video(self.animal_to_include,self.ID_colors,self.behavior_to_include,show_legend=self.show_legend)
-						AAD.export_results(normalize_distance=self.normalize_distance,parameter_to_analyze=self.parameter_to_analyze)
-
-						if self.path_to_categorizer is not None:
-							for animal_name in self.animal_kinds:
-								for n in AAD.event_probability[animal_name]:
-									all_events[animal_name][len(all_events[animal_name])]=AAD.event_probability[animal_name][n]
-							if len(all_time)<len(AAD.all_time):
-								all_time=AAD.all_time
-
-				if self.path_to_categorizer is not None:
-
-					max_length=len(all_time)
-
-					if self.use_detector is False:
-
-						for n in all_events:
-							event_data[len(event_data)]=all_events[n]+[['NA',-1]]*(max_length-len(all_events[n]))
-						all_events_df=pd.DataFrame(event_data,index=all_time)
-						all_events_df.to_excel(os.path.join(self.result_path,'all_events.xlsx'),float_format='%.2f',index_label='time/ID')
-						plot_events(self.result_path,event_data,all_time,self.behaviornames_and_colors,self.behavior_to_include,width=0,height=0)
-						folders=[i for i in os.listdir(self.result_path) if os.path.isdir(os.path.join(self.result_path,i))]
-						folders.sort()
-						for behavior_name in self.behaviornames_and_colors:
-							all_summary=[]
-							for folder in folders:
-								individual_summary=os.path.join(self.result_path,folder,behavior_name,'all_summary.xlsx')
-								if os.path.exists(individual_summary):
-									all_summary.append(pd.read_excel(individual_summary))
-							if len(all_summary)>=1:
-								all_summary=pd.concat(all_summary,ignore_index=True)
-								all_summary.to_excel(os.path.join(self.result_path,behavior_name+'_summary.xlsx'),float_format='%.2f',index_label='ID/parameter')
-
-					else:
-
-						for animal_name in self.animal_to_include:
-							for n in all_events[animal_name]:
-								event_data[len(event_data)]=all_events[animal_name][n]+[['NA',-1]]*(max_length-len(all_events[animal_name][n]))
-							event_data[len(event_data)]=[['NA',-1]]*max_length
-						del event_data[len(event_data)-1]
-						all_events_df=pd.DataFrame(event_data,index=all_time)
-						all_events_df.to_excel(os.path.join(self.result_path,'all_events.xlsx'),float_format='%.2f',index_label='time/ID')
-						plot_events(self.result_path,event_data,all_time,self.behaviornames_and_colors,self.behavior_to_include,width=0,height=0)
-						folders=[i for i in os.listdir(self.result_path) if os.path.isdir(os.path.join(self.result_path,i))]
-						folders.sort()
-						for animal_name in self.animal_kinds:
-							for behavior_name in self.behaviornames_and_colors:
-								all_summary=[]
-								for folder in folders:
-									individual_summary=os.path.join(self.result_path,folder,behavior_name,animal_name+'_all_summary.xlsx')
-									if os.path.exists(individual_summary):
-										all_summary.append(pd.read_excel(individual_summary))
-								if len(all_summary)>=1:
-									all_summary=pd.concat(all_summary,ignore_index=True)
-									all_summary.to_excel(os.path.join(self.result_path,animal_name+'_'+behavior_name+'_summary.xlsx'),float_format='%.2f',index_label='ID/parameter')
-
-			print('Analysis completed!')
-
+				analyze_api.run_background_subtraction(
+					video = str(opts.videos[0]),
+					out_dir = str(opts.output_dir),
+					animal_number = opts.animal_number,
+					on_progress = self.update_bar,
+					**opts.as_prepare_kwargs(),
+				)
+		
+			wx.MessageBox('Analysis complete!', 'LabGym', wx.OK | wx.ICON_INFORMATION)
+		
+		except Exception as exc:
+			wx.MessageBox(f'Analysis failed: \n{exc}', 'LabGym', wx.OK | wx.ICON_ERROR)
+			raise
 
 
 class PanelLv2_MineResults(wx.Panel):
