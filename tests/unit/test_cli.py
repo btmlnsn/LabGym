@@ -4,7 +4,7 @@ import sys
 
 import pytest
 
-from LabGym import cli
+from LabGym.domain import cli_flags
 from LabGym import __version__ as version
 from .exitstatus import exitstatus
 
@@ -21,7 +21,7 @@ def test_parse_args_no_args(monkeypatch):
 	monkeypatch.setattr(sys, 'argv', ['cmd'])
 
 	# Act
-	result = cli.parse_args()
+	result = cli_flags.parse_args()
 
 	# Assert
 	assert result == {}
@@ -34,7 +34,7 @@ def test_parse_args_verbose_then_info(monkeypatch):
 		['cmd', '--verbose', '--logging_level', 'INFO'])
 
 	# Act
-	result = cli.parse_args()
+	result = cli_flags.parse_args()
 
 	# Assert
 	assert result == {'logging_level': 'INFO'}
@@ -47,7 +47,7 @@ def test_parse_args_info_then_verbose(monkeypatch):
 		['cmd', '--logging_level', 'INFO', '--verbose'])
 
 	# Act
-	result = cli.parse_args()
+	result = cli_flags.parse_args()
 
 	# Assert
 	assert result == {'logging_level': 'DEBUG'}
@@ -63,7 +63,7 @@ def test_parse_args_bad_option(monkeypatch):
 	with pytest.raises(SystemExit,
 		match="cmd: bad usage -- unrecognized option '--moo'"
 			'\nUsage: ') as e:
-		result = cli.parse_args()
+		result = cli_flags.parse_args()
 
 	# Assert
 	assert exitstatus(e.value) == 1
@@ -77,7 +77,7 @@ def test_parse_args_help(monkeypatch, capsys):
 
 	# Act, and assert raises(SystemExit)
 	with pytest.raises(SystemExit) as e:
-		result = cli.parse_args()
+		result = cli_flags.parse_args()
 
 	# Assert
 	assert re.match('Usage: ', capsys.readouterr().out)
@@ -92,7 +92,7 @@ def test_parse_args_version(monkeypatch, capsys):
 
 	# Act, and assert raises(SystemExit)
 	with pytest.raises(SystemExit) as e:
-		result = cli.parse_args()
+		result = cli_flags.parse_args()
 
 	# Assert
 	assert capsys.readouterr().out == f'version: {version}\n'
@@ -105,7 +105,7 @@ def test_anonymous(monkeypatch):
 		['dummy', '--anonymous'])
 
 	# Act
-	result = cli.parse_args()
+	result = cli_flags.parse_args()
 
 	# Assert
 	assert result == {'anonymous': True}
@@ -117,7 +117,7 @@ def test_enable_(monkeypatch):
 		['dummy', '--enable', 'F1', '--enable', 'F2', '--disable', 'F1'])
 
 	# Act
-	result = cli.parse_args()
+	result = cli_flags.parse_args()
 
 	# Assert
 	assert result == {'enable': {'F1': False, 'F2': True}}

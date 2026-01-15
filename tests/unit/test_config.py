@@ -5,6 +5,7 @@ import sys
 import pytest  # pytest: simple powerful testing with Python
 
 from LabGym.config import config
+from LabGym.domain import cli_flags
 from .exitstatus import exitstatus
 
 
@@ -22,7 +23,7 @@ def test_success_parse_args_empty(monkeypatch):
 	# Arrange
 	monkeypatch.setattr(config, '_cached_config', None)
 	result = {}
-	monkeypatch.setattr(config.cli, 'parse_args', lambda: result)
+	monkeypatch.setattr(cli_flags, 'parse_args', lambda: result)
 	# logging.debug('%s: %r', 'result', result)
 
 	# Act
@@ -35,7 +36,7 @@ def test_success_parse_args_has_enable(monkeypatch):
 	# Arrange
 	monkeypatch.setattr(config, '_cached_config', None)
 	result = {'enable': {'alfa': True, 'bravo': False}}
-	monkeypatch.setattr(config.cli, 'parse_args', lambda: result)
+	monkeypatch.setattr(cli_flags, 'parse_args', lambda: result)
 	# logging.debug('%s: %r', 'result', result)
 
 	# Act
@@ -49,7 +50,7 @@ def test_missing_configfile(monkeypatch):
 	# Arrange
 	monkeypatch.setattr(config, '_cached_config', None)
 	result = {'configfile': Path('/charlie/delta.yaml')}
-	monkeypatch.setattr(config.cli, 'parse_args', lambda: result)
+	monkeypatch.setattr(cli_flags, 'parse_args', lambda: result)
 	# logging.debug('%s: %r', 'result', result)
 
 	# Act
@@ -69,7 +70,7 @@ def test_bad_configfile(monkeypatch):
 	# Arrange
 	monkeypatch.setattr(config, '_cached_config', None)
 	result = {'configfile': testdir.joinpath('test_config','bad.yaml')}
-	monkeypatch.setattr(config.cli, 'parse_args', lambda: result)
+	monkeypatch.setattr(cli_flags, 'parse_args', lambda: result)
 	# logging.debug('%s: %r', 'result', result)
 
 	# Act
