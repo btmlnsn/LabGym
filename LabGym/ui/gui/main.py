@@ -20,7 +20,7 @@ Email: bingye@umich.edu
 # Standard library imports.
 import logging
 import sys
-from .app_icon import set_frame_icon, setup_application_icons
+from .app_icon import wx_app_icon, setup_application_icons
 
 # Log the load of this module (by the module loader, on first import).
 # Intentionally positioning these statements before other imports, against the
@@ -372,9 +372,8 @@ class MainFrame(wx.Frame):
 		self.SetSize((1000, 600))
 
 		# Set the app icon within GUI
-		set_frame_icon(self, context='normal')  # Set normal icon first
-		if sys.platform.startswith("win"):
-			set_frame_icon(self, context='small', size=16)  # Override with small icon for title bar
+		with wx_app_icon() as ico:
+			self.SetIcon(ico)
 
 		# Create the aui_manager to manage this frame/window.
 		self.aui_manager = wx.aui.AuiManager()

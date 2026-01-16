@@ -86,7 +86,7 @@ path='LabGym/__init__.py'
 
 [tool.pdm.build]
 includes = [
-    "LabGym/assets/icons/"
+    "LabGym/ui/assets/"
 ]
 
 [tool.pdm.dev-dependencies]
@@ -102,3 +102,6 @@ docs=[
 [tool.ruff.lint]
 select=['E4','E7','E9','F','I001']
 ignore-init-module-imports=true
+
+[tool.setuptools.package-data]
+"LabGym.ui.assets.icons" = ["*.ico", "*.icns", "*.png"]

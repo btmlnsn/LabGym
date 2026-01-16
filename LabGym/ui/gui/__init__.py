@@ -26,7 +26,7 @@ from .preprocessor import (
 )
 
 from .utils import add_or_select_notebook_page
-from .app_icon import set_frame_icon, setup_application_icons
+from .app_icon import wx_app_icon, setup_application_icons
 
 __all__ = [
     'main_window',
@@ -44,7 +44,7 @@ __all__ = [
     'PanelLv2_ProcessVideos',
     'PanelLv2_DrawMarkers',
     'add_or_select_notebook_page',
-    'set_frame_icon',
+    'wx_app_icon',
     'setup_application_icons',
     'gui_main',
     'gui_analyzer',
