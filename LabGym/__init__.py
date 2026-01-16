@@ -23,7 +23,7 @@ __version__='2.9.6'
 
 
 
-from .utils import logging_config, resource_loader, wx_utils
+from .utils import logging_config, wx_utils
 from .domain import cli_flags
 from .config import config, central_logging
 from .system import probes, survey, registration
@@ -43,7 +43,6 @@ __all__ = [
     '__version__',
     'cli_flags',
     'logging_config',
-    'resource_loader',
     'wx_utils',
     'config',
     'central_logging',

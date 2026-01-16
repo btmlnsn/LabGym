@@ -1,5 +1,5 @@
 """
-LabGym.io.filesystem
+LabGym.subsystems.shared.io.filesystem
 
 Helpers for reading and writing spreadsheet artifacts
 

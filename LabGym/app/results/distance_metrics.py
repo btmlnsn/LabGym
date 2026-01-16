@@ -10,25 +10,18 @@ from typing import Sequence
 
 # Local application imports
 from LabGym.app.context import ProgressCallback, noop_progress
-from LabGym.subsystems.results.api import distance_metrics
+from LabGym.domain.options import ResultsOptions
+from LabGym.subsystems.results.api import compute_distance_metrics
 
 
 def run(
-    *,
-    results_path: str | Path,
-    behaviors: Sequence[str],
-    video_folder_name: str | None = None,
+    opts: ResultsOptions,
     on_progress: ProgressCallback | None = None,
 ) -> None:
     on_progress = on_progress or noop_progress()
     on_progress(0, "Calculating distance metrics")
 
-    distance_metrics(
-        path_to_folder = str(results_path),
-        filename = video_folder_name or Path(results_path).name,
-        behavior_to_include = list(behaviors),
-        out_path = str(results_path),
-    )
+    compute_distance_metrics(**opts.as_stat_kwargs())
 
     on_progress(100, "Distance metrics complete")
 

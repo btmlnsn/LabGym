@@ -37,7 +37,7 @@ import torch
 # Local application imports
 from LabGym.subsystems.detection.api import evaluate as Detector
 logger.debug('importing video IO tools (starting...)')
-from LabGym.io.video import(
+from LabGym.subsystems.shared.io.video import(
     estimate_constants,
     contour_frame,
     crop_frame,

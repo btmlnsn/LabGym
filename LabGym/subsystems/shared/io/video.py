@@ -1,5 +1,5 @@
 """
-LabGym.io.video
+LabGym.subsystems.shared.io.video
 
 Helpers extracted from LabGym.core.tools (video / image processing)
 

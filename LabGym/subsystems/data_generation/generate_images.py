@@ -16,7 +16,7 @@ from typing import Iterable, Callable
 logger = logging.getLogger(__name__)
 
 # Local application imports
-from LabGym.io.video import extract_frames
+from LabGym.subsystems.shared.io.video import extract_frames
 
 _SUPPORTED_VIDEO_EXTENSIONS = (
     ".avi", ".mpg", ".mpeg", ".wmv", ".mp4", ".mkv", ".m4v", ".mov"

@@ -45,7 +45,7 @@ from LabGym.app.train.categorizer import run as train_categorizer
 from LabGym.app.evaluate.categorizer import run as evaluate_categorizer
 logger.debug('importing %s done', 'LabGym.app.evaluate.categorizer')
 from LabGym.config import config
-from LabGym.io.filesystem import sort_examples_from_csv
+from LabGym.subsystems.shared.io.filesystem import sort_examples_from_csv
 from .utils import add_or_select_notebook_page
 logger.debug('importing %s done', 'LabGym.app.data.generate_examples')
 from LabGym.app.data.generate_examples import run as generate_examples

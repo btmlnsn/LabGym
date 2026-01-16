@@ -7,7 +7,9 @@ from __future__ import annotations
 # Standard library imports
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any
+
+from pandas.core.arrays.timedeltas import parse_timedelta_unit
 
 Color = Tuple[int, int, int]
 
@@ -62,3 +64,41 @@ class TrainDetectorOptions:
     epochs: int = 300
     learning_rate: float = 1e-4
 
+
+# RESULTS 
+@dataclass 
+class ResultsOptions:
+    results_dir: Path
+    behaviors: list[str] = field(default_factory = list)
+    
+    # statistical settings
+    paired: bool = False
+    p_value: float = 0.05
+    control_frame: Any | None = None  # Optional pandas DP
+    file_names: list[str] = field(default_factory = list)
+
+    # extra outputs
+    make_plot: bool = False
+
+    
+    # helpers
+    def as_stat_kwargs(self) -> dict:
+        return dict(
+            data_frames = [],
+            control_frame = self.control_frame,
+            paired = self.paired,
+            out_dir = self.results_dir,
+            p_value = self.p_value,
+            file_names = self.file_names,
+        )
+
+
+    def as_plot_kwargs(self) -> dict:
+        return dict(
+            results_path = self.results_dir,
+            behaviors = self.behaviors,
+            width = 0,
+            height = 0,
+        )
+    
+    

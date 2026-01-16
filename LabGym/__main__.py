@@ -54,7 +54,6 @@ import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
 
 # Local application/library specific imports.
 # pylint: disable-next=unused-import
-from LabGym.utils import resource_loader  # replace deprecated pkg_resources
 from LabGym import __version__, gui_main
 from LabGym.system import probes
 
