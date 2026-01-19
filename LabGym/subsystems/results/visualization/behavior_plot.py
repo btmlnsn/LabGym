@@ -1,5 +1,5 @@
 """
-LabGym.workflows.analysis.behavior_plot
+LabGym.subsystems.results.visualization.behavior_plot
 
 Behavior plot helpers extracted from LabGym.core.tools
 Safe to import from any layer; no GUI dependencies.

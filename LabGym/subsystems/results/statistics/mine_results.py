@@ -1,5 +1,5 @@
 """
-LabGym.workflows.analysis.mine_results
+LabGym.subsystems.results.statistics.mine_results
 
 Statistical mining helpers extracted from LabGym.stats.minedata
 """

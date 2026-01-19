@@ -17,7 +17,7 @@ class ProgressCallback(Protocol):
     def __call__(self, percent: int, message: str) -> None: ...
 
 
-def noop_progress() -> ProgressCallback:
+def noop_progress() -> Callable[[int, str], None]:
     """Handy default that does nothing."""
     return lambda _percent, _msg: None
 

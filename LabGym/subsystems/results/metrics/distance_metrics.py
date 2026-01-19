@@ -1,5 +1,5 @@
 """
-LabGym.workflows.analysis.distance_metrics
+LabGym.subsystems.results.metrics.distance_metrics
 
 Distance metric helpers extracted from LabGym.core.tools
 Safe to import from any layer; no GUI dependencies.

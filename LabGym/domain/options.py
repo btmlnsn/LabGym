@@ -9,7 +9,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any
 
-from pandas.core.arrays.timedeltas import parse_timedelta_unit
 
 Color = Tuple[int, int, int]
 

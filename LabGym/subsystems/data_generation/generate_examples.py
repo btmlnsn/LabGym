@@ -15,7 +15,7 @@ from typing import Iterable, Sequence
 
 # Local application imports
 # heavy workflows for analysis
-from LabGym.subsystems.categorization.predict import (
+from LabGym.subsystems.shared.events import (
     AnalyzeAnimal,
     AnalyzeAnimalDetector,
 )

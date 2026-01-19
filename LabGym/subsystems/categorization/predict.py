@@ -1,5 +1,5 @@
 """
-LabGym.workflows.analysis.analyze_behaviors
+LabGym.subsystems.categorization.predict
 
 Behavior analysis helpers extracted from LabGym.core
 Safe to import from any layer; no GUI dependencies.
@@ -35,7 +35,7 @@ from keras.utils import img_to_array
 import torch
 
 # Local application imports
-from LabGym.subsystems.detection.api import evaluate as Detector
+from LabGym.subsystems.shared.events import evaluate_detector as Detector
 logger.debug('importing video IO tools (starting...)')
 from LabGym.subsystems.shared.io.video import(
     estimate_constants,

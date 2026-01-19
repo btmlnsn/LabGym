@@ -44,7 +44,7 @@ from LabGym.app.results import (
 	behavior_plot,
 )
 from LabGym.ui.bindings import gui as gui_bindings
-from LabGym.subsystems.shared.io.filesystem import parse_all_events_file
+from LabGym.app.results.parse_events import parse_all_events_file
 
 
 class ColorPicker(wx.Dialog):

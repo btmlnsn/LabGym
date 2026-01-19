@@ -34,7 +34,7 @@ from PIL import Image,ImageEnhance
 import wx
 
 # Local application imports.
-from LabGym.subsystems.shared.io.video import preprocess_video
+from LabGym.app.data.preprocess_video import preprocess_video
 
 
 class PanelLv2_ProcessVideos(wx.Panel):
