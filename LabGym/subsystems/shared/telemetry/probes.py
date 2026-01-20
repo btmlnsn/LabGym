@@ -32,8 +32,8 @@ import packaging  # Core utilities for Python packages
 
 # Local application/library specific imports.
 from LabGym import __version__ as version
-from ..config import central_logging
-from .. import config
+from LabGym.config.logging import central as central_logging
+from LabGym.config import core as config
 from . import survey, registration
 
 

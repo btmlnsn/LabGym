@@ -4,7 +4,7 @@ import sys
 
 import pytest  # pytest: simple powerful testing with Python
 
-from LabGym.config import config
+from LabGym.config import core as config
 from LabGym.domain import cli_flags
 from .exitstatus import exitstatus
 

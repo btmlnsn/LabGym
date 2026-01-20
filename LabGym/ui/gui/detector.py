@@ -35,7 +35,7 @@ logger.debug('loading %s', __file__)  # pylint: disable=wrong-import-position
 import wx
 
 # Local application imports.
-from LabGym.config import config
+from LabGym.config import core as config
 logger.debug('importing %s ...', 'LabGym.app.evaluate.detector')
 from LabGym.app.evaluate.detector import run as evaluate_detector
 logger.debug('importing %s ...', 'LabGym.app.data.generate_images')

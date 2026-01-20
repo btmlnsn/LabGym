@@ -8,9 +8,9 @@ from packaging import version
 
 import pytest  # pytest: simple powerful testing with Python
 
-import LabGym.system.probes as probes_module
-import LabGym.system.survey as survey_module
-from LabGym.config import config
+import LabGym.subsystems.shared.telemetry.probes as probes_module
+import LabGym.subsystems.shared.telemetry.survey as survey_module
+from LabGym.config import core as config
 from .exitstatus import exitstatus
 
 

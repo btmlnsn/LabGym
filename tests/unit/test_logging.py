@@ -4,8 +4,8 @@ import sys
 
 import pytest
 
-from LabGym.config import central_logging
-from LabGym.config import config as config_module
+from LabGym.config.logging import central as central_logging
+from LabGym.config import core as config_module
 from LabGym.domain import cli_flags
 # from .exitstatus import exitstatus
 

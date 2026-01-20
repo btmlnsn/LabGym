@@ -1,7 +1,7 @@
 import logging
 import pytest
 
-from LabGym import wx_utils
+from LabGym.ui.gui import wx_utils
 import wx
 
 

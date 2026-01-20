@@ -64,6 +64,23 @@ class TrainDetectorOptions:
     learning_rate: float = 1e-4
 
 
+# CATEGORIZER TRAINING
+@dataclass
+class TrainCategorizerOptions:
+    data_path: Path
+    model_path: Path
+    network: str = "comb"
+    batch_size: int = 32
+
+
+# CATEGORIZER EVALUATION
+@dataclass
+class EvalCategorizerOptions:
+    groundtruth_path: Path
+    model_path: Path
+    out_path: Path | None = None
+
+
 # RESULTS 
 @dataclass 
 class ResultsOptions:

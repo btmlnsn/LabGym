@@ -4,8 +4,10 @@ import sys
 
 import pytest
 
-from LabGym import logging_config
+from LabGym.config.logging import bootstrap as logging_config
+import LabGym.config.core as core
 
+_LOGGING_YAML = Path(logging_config.__file__).with_name("logging.yaml")
 
 # basicConfig here isn't effective, maybe pytest has already configured logging?
 # instead, use the root logger's setLevel method
@@ -21,12 +23,11 @@ def test_success(monkeypatch):
 	rootlogger_reset()
 	assert rootlogger.level == logging.DEBUG
 	_config = {
-		'logging_configfiles':
-			[Path(logging_config.__file__).parent.parent.joinpath('config', 'logging.yaml')],
+		'logging_configfiles': [_LOGGING_YAML],
 		'logging_configfile': None,
 		'logging_level': 'INFO',
 		}
-	monkeypatch.setattr(logging_config.config, 'get_config', lambda: _config)
+	monkeypatch.setattr(core, 'get_config', lambda: _config)
 	logging.debug('%s: %r', '_config', _config)
 
 	# Act
@@ -42,12 +43,11 @@ def test_bad_logging_level(monkeypatch):
 	rootlogger_reset()
 	assert rootlogger.level == logging.DEBUG
 	_config = {
-		'logging_configfiles':
-			[Path(logging_config.__file__).parent.parent.joinpath('config','logging.yaml')],
+		'logging_configfiles': [_LOGGING_YAML],
 		'logging_configfile': None,
 		'logging_level': 'WALNUT',  # bad value
 		}
-	monkeypatch.setattr(logging_config.config, 'get_config', lambda: _config)
+	monkeypatch.setattr(core, 'get_config', lambda: _config)
 	logging.debug('%s: %r', '_config', _config)
 
 	# Act
@@ -68,7 +68,7 @@ def test_bad_specific_logging_configfile(monkeypatch):
 		'logging_configfile': Path('/bravo/charlie.yaml'),
 		# 'logging_level': None,
 		}
-	monkeypatch.setattr(logging_config.config, 'get_config', lambda: _config)
+	monkeypatch.setattr(core, 'get_config', lambda: _config)
 	logging.debug('%s: %r', '_config', _config)
 
 	# Act

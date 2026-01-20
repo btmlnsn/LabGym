@@ -37,7 +37,7 @@ import wx
 
 # Local application imports.
 from LabGym.app.analyze import behaviors as analyze_api
-from LabGym.config import config
+from LabGym.config import core as config
 from LabGym.app.results import (
 	distance_metrics,
 	mine_results,

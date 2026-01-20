@@ -78,7 +78,7 @@ Example 2, Log the loading of this module, and configure the logging system.
 	# this module before other import statements are executed and
 	# potentially produce their own log messages.
 
-	from LabGym.utils import logging_config
+	from LabGym.config.logging.bootstrap import defer as logging_config
 	# Collect logrecords and defer handling until logging is configured.
 	logging_config.defer()
 
@@ -121,7 +121,7 @@ from typing import Dict, List
 import yaml  # PyYAML, YAML parser and emitter for Python
 
 # Local application/library specific imports.
-from .. import config
+from LabGym.config import core
 
 
 logger = logging.getLogger(__name__)
@@ -251,7 +251,7 @@ def configure() -> None:
 		defer()  # Ensure logrecords are being queued.
 
 		# (1) Get all of the values needed from config.get_config().
-		_config = config.get_config()
+		_config = core.get_config()
 		logging_configfiles: List[Path] = _config['logging_configfiles']
 		logging_configfile: Path|None = _config.get('logging_configfile')
 		logging_level: str|None = _config.get('logging_level')

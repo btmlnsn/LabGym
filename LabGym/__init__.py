@@ -23,10 +23,10 @@ __version__='2.9.6'
 
 
 
-from .utils import logging_config, wx_utils
 from .domain import cli_flags
-from .config import config, central_logging
-from .system import probes, survey, registration
+from .config import core
+from .config.logging import bootstrap, central
+from LabGym.subsystems.shared.telemetry import probes, survey, registration
 
 from .ui.gui import main as gui_main
 from .ui.gui import analyzer as gui_analyzer
@@ -42,10 +42,10 @@ from .ui.gui import app_icon as gui_app_icon
 __all__ = [
     '__version__',
     'cli_flags',
-    'logging_config',
+    'bootstrap',
+    'central',
     'wx_utils',
-    'config',
-    'central_logging',
+    'core',
     'probes',
     'survey',
     'registration',

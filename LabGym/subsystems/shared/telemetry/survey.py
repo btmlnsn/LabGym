@@ -75,12 +75,14 @@ import tempfile
 import textwrap
 import webbrowser
 
+
+from LabGym.ui.gui import wx_utils
 # Related third party imports.
 import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
 
 # Local application/library specific imports.
-from ..config import config
-from ..utils import wx_utils
+from LabGym.config import core as config
+
 
 
 logger = logging.getLogger(__name__)

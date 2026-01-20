@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from LabGym.config import config as _cfg_mod     # avoid name clash
+from LabGym.config import core as _cfg_mod    # avoid name clash
 
 
 class ProjectPaths:

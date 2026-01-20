@@ -8,11 +8,11 @@ import time
 
 import pytest  # pytest: simple powerful testing with Python
 
-from LabGym import wx_utils  # on load, monkeypatch wx.App to be a singleton
+from LabGym.ui.gui import wx_utils  # on load, monkeypatch wx.App to be a singleton
 import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
 
-import LabGym.system.survey as survey_module
-from LabGym.config import config as config_module
+import LabGym.subsystems.shared.telemetry.survey as survey_module
+from LabGym.config import core as config_module
 from .exitstatus import exitstatus
 
 

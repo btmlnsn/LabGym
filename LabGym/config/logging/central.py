@@ -18,7 +18,7 @@ import queue
 # (none)
 
 # Local application/library specific imports.
-from .config import get_config
+from LabGym.config.core import get_config
 
 
 # cleanup should be registered with atexit if queueing is used.

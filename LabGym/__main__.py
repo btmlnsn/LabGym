@@ -31,7 +31,7 @@ from pathlib import Path
 # this module before other import statements are executed and
 # potentially produce their own log messages.
 # pylint: disable=wrong-import-position
-from LabGym.utils import logging_config  # pylint: disable=ungrouped-imports
+import LabGym.config.logging.bootstrap as logging_config  # pylint: disable=ungrouped-imports
 # Collect logrecords and defer handling until logging is configured.
 logging_config.defer()
 
@@ -49,13 +49,13 @@ logging_config.configure()
 # Related third party imports.
 from packaging import version  # Core utilities for Python packages
 import requests  # Python HTTP for Humans.
-from LabGym.utils import wx_utils  # on load, monkeypatch wx.App to be a strict-singleton
+from LabGym.ui.gui import wx_utils  # on load, monkeypatch wx.App to be a strict-singleton
 import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
 
 # Local application/library specific imports.
 # pylint: disable-next=unused-import
 from LabGym import __version__, gui_main
-from LabGym.system import probes
+from LabGym.subsystems.shared.telemetry import probes
 
 
 logger.debug('%s: %r', '(__name__, __package__)', (__name__, __package__))

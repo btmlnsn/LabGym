@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 def test_main(monkeypatch):
 	# Arrange
 	# patch configure, in logging_config, *before* importing __main__
-	from LabGym.utils import logging_config
+	from LabGym.config.logging import bootstrap as logging_config
 	monkeypatch.setattr(logging_config, 'configure', lambda *args: None)
 
 	from LabGym import __main__
@@ -52,7 +52,7 @@ def test_main(monkeypatch):
 def test_main_current_labgym(monkeypatch):
 	# Arrange
 	# patch configure, in logging_config, *before* importing __main__
-	from LabGym.utils import logging_config
+	from LabGym.config.logging import bootstrap as logging_config
 	monkeypatch.setattr(logging_config, 'configure', lambda *args: None)
 
 	from LabGym import __main__
@@ -78,7 +78,7 @@ def test_main_current_labgym(monkeypatch):
 def test_main_stale_labgym(monkeypatch):
 	# Arrange
 	# patch configure, in logging_config, *before* importing __main__
-	from LabGym.utils import logging_config
+	from LabGym.config.logging import bootstrap as logging_config
 	monkeypatch.setattr(logging_config, 'configure', lambda *args: None)
 
 	from LabGym import __main__

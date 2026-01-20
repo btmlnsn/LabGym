@@ -44,8 +44,7 @@ logger.debug('importing %s done', 'LabGym.app.analyze.behaviors')
 from LabGym.app.train.categorizer import run as train_categorizer
 from LabGym.app.evaluate.categorizer import run as evaluate_categorizer
 logger.debug('importing %s done', 'LabGym.app.evaluate.categorizer')
-from LabGym.config import config
-from LabGym.app.results.behavior_plot import sort_examples_from_csv
+from LabGym.config import core as config
 from .utils import add_or_select_notebook_page
 logger.debug('importing %s done', 'LabGym.app.data.generate_examples')
 from LabGym.app.data.generate_examples import run as generate_examples

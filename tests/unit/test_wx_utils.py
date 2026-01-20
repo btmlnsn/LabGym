@@ -7,7 +7,7 @@ import time
 
 import pytest  # pytest: simple powerful testing with Python
 
-from LabGym import wx_utils  # on load, monkeypatch wx.App to be a singleton
+from LabGym.ui.gui import wx_utils  # on load, monkeypatch wx.App to be a singleton
 import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
 
 
