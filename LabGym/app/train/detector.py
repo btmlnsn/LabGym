@@ -7,6 +7,7 @@ from __future__ import annotations
 # Local application imports
 from LabGym.app.context import ProgressCallback, noop_progress
 from LabGym.subsystems.detection.api import train as DetectorTrainer
+from LabGym.domain.options import TrainDetectorOptions
 
 
 def run(
@@ -32,4 +33,15 @@ def run(
     )
 
     on_progress(100, "Detector training")
+
+
+def run_options(opts: TrainDetectorOptions) -> None:
+    """Entry point that accepts a TrainDetectorOptions dataclass."""
+    run(
+        path_to_annotation = str(opts.path_to_annotation),
+        path_to_trainingimages = str(opts.path_to_trainingimages),
+        path_to_detector = str(opts.path_to_detector),
+        iteration_num = opts.iteration_num,
+        inference_size = opts.inference_size,
+    )
 

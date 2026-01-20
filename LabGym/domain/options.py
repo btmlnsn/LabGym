@@ -13,6 +13,30 @@ from typing import Dict, List, Optional, Tuple, Any
 Color = Tuple[int, int, int]
 
 
+# DATA GENERATION
+
+# Generate Images Options
+@dataclass
+class GenerateImagesOptions:
+    """Options for generating detector training images."""
+    videos: List[Path]
+    out_dir: Path
+    framewidth: int | None = None
+    start_t: float = 0.0
+    duration: float = 0.0
+    skip: int = 1000
+
+# Generate Examples Options
+@dataclass
+class GenerateExamplesOptions:
+    """Options for generating categorizer training examples"""
+    videos: List[Path]
+    out_dir: Path
+    behavior_mode: int
+    use_detector: bool = False
+    detector_path: Path | None = None
+
+
 # ANALYSIS
 @dataclass
 class AnalyzeOptions:
@@ -58,10 +82,11 @@ class AnalyzeOptions:
 # DETECTOR TRAINING (to be fleshed out later)
 @dataclass
 class TrainDetectorOptions:
-    data_root: Path
-    output_dir: Path
-    epochs: int = 300
-    learning_rate: float = 1e-4
+    path_to_annotation: Path
+    path_to_trainingimages: Path
+    path_to_detector: Path
+    iteration_num: int = 300
+    inference_size: int = 800
 
 
 # CATEGORIZER TRAINING
@@ -69,16 +94,15 @@ class TrainDetectorOptions:
 class TrainCategorizerOptions:
     data_path: Path
     model_path: Path
-    network: str = "comb"
-    batch_size: int = 32
+    network_type: int = 2
 
 
 # CATEGORIZER EVALUATION
 @dataclass
 class EvalCategorizerOptions:
-    groundtruth_path: Path
-    model_path: Path
-    out_path: Path | None = None
+    groundtruth_dir: Path
+    trained_model_dir: Path
+    results_dir: Path | None = None
 
 
 # RESULTS 

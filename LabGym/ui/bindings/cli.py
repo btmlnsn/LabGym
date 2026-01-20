@@ -50,10 +50,11 @@ def train_detector_from_argv(argv: List[str]) -> TrainDetectorOptions:
     ns = p.parse_args(argv)
 
     return TrainDetectorOptions(
-        data_root=Path(ns.images),
-        output_dir=Path(ns.out),
-        epochs=ns.iterations,
-        learning_rate=1e-4,          # placeholder; CLI doesn’t expose yet
+        path_to_annotation = Path(ns.ann),
+        path_to_trainingimages = Path(ns.images),
+        path_to_detector = Path(ns.out),
+        iteration_num = ns.iterations,
+        inference_size = ns.inf_size,
     )
 
 
@@ -66,9 +67,9 @@ def train_categorizer_from_argv(argv: List[str]) -> TrainCategorizerOptions:
     ns = p.parse_args(argv)
 
     return TrainCategorizerOptions(
-        data_path=Path(ns.data),
-        model_path=Path(ns.out),
-        network=ns.network,
+        groundtruth_dir = Path(ns.gt),
+        trained_model_dir = Path(ns.model),
+        network_type = {"pattern": 0, "animation": 1, "comb": 2}[ns.network],
     )
 
 
@@ -81,7 +82,7 @@ def eval_categorizer_from_argv(argv: List[str]) -> EvalCategorizerOptions:
     ns = p.parse_args(argv)
 
     return EvalCategorizerOptions(
-        groundtruth_path=Path(ns.gt),
-        model_path=Path(ns.model),
-        out_path=Path(ns.out) if ns.out else None,
+        groundtruth_dir = Path(ns.gt),
+        trained_model_dir =Path(ns.model),
+        results_dir = Path(ns.out) if ns.out else None,
     )
