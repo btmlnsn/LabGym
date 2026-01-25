@@ -260,3 +260,101 @@ def multi_groups_normal():
         groups.append(group)
     
     return groups
+
+
+@pytest.fixture
+def sample_file_names_four():
+    """File names for four-group comparisons"""
+    
+    return ['Control', 'Treatment_1', 'Treatment_2', 'Treatment_3'] 
+
+
+@pytest.fixture
+def sample_file_names_four():
+    """File names for four-group comparisons"""
+    
+    return ['Control', 'Treatment_1', 'Treatment_2', 'Treatment_3']
+
+
+@pytest.fixture
+def synthetic_video_file(tmp_path, sample_video_frames_bgr):
+    """
+    Create a temporary video file from synthetic frames.
+    Returns path to video file.
+    """
+    import cv2
+    video_path = tmp_path / "test_video.avi"
+    fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+    fps = 30
+    height, width = sample_video_frames_bgr[0].shape[:2]
+
+    writer = cv2.VideoWriter(str(video_path), fourcc, fps, (width, height))
+    for frame in sample_video_frames_bgr:
+        writer.write(frame)
+
+    writer.release()
+
+    return str(video_path)
+
+
+@pytest.fixture
+def mock_estimate_constants_result():
+    """
+    Mock return value for estimate_constants() from tools.py
+    Returns tuple: (backgorund, background_low, background_high, t, animal_area)
+    """
+    import numpy as np
+
+    background = np.full((100, 100, 3), 200, dtype = np.uint8)
+    background_low = np.full((100, 100, 3), 180, dtype = np.uint8)
+    background_high = np.full((100, 100, 3), 220, dtype = np.uint8)
+    t = 0.0
+    animal_area = 700  # Approximate area of circle with radius 15
+
+    return (background, background_low, background_high, t, animal_area)
+
+
+@pytest.fixture
+def sample_behavior_names_and_colors():
+    """Sample behavior names and colors for testing."""
+    return {
+        'walking': ('Walking', '#FF0000'),
+        'resting': ('Resting', '#00FF00'),
+    }
+
+
+@pytest.fixture
+def sample_contours_centers_heights():
+    """Sample contours, centers, and heights for tracking tests."""
+    import numpy as np
+    import cv2
+
+    # Create a simple circular contour
+    angles = np.linspace(0, 2* np.pi, 30, endpoint = False)
+    contour = np.array([
+        [[int(50 + 15 * np.cos(a)), int(50 + 15 * np.sin(a))]]
+        for a in angles
+    ], dtype = np.int32)
+
+    center = (50, 50)
+    height = 30
+
+
+    return ([contour], [center], [height], [])
+
+
+@pytest.fixture
+def mock_keras_model():
+    """Mock Keras model for behavior categorization."""
+    from unittest.mock import MagicMock
+    import numpy as np
+
+    mock_model = MagicMock()
+
+    # Mock predict to return probabilities for 2 behaviors
+    # Shape: (n_frames, 1) for binary classification
+    mock_model.predict.return_value = np.array([[0.7], [0.8], [0.3], [0.9]], dtype = np.float32)
+
+    
+    return mock_model
+
