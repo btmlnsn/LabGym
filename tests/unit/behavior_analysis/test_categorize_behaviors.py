@@ -1,5 +1,5 @@
 """
-LabGym.tests.unit.behavior_analysis.test_categorize_behaviors
+/tests.unit.behavior_analysis.test_categorize_behaviors
 
 Tests for AnalyzeAnimal.categorize_behaviors() method.
 """

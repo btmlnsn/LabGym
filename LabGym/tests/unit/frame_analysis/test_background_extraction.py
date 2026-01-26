@@ -1,5 +1,5 @@
 """
-tests/unit/frame_analysis/teset_background_extraction
+/tests.unit.frame_analysis.test_background_extraction
 
 Tests for extract_background()
 Function extracts a static background from a list of video frames.

@@ -1,5 +1,5 @@
 """
-LabGym.tests.unit.statistical.test_multiple_groups
+/tests.unit.statistical.test_multiple_groups
 
 Tests for the data_mining.multiple_groups() method
 

@@ -1,5 +1,5 @@
 """
-LabGym.tests.unit.behavior_analysis.test_acquire_information
+/tests.unit.behavior_analysis.test_acquire_information
 
 Tests for AnalyzeAnimal.acquire_information() method.
 """

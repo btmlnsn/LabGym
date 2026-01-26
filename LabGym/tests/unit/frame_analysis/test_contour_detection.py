@@ -1,5 +1,5 @@
 """
-tests/unit/frame_analysis/test_contour_detection
+/tests.unit.frame_analysis.test_contour_detection
 
 Tests for LabGym.tools contour detection functions:
 - get_inner()

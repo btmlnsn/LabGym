@@ -1,5 +1,5 @@
 """
-LabGym.tests.unit.behavior_analysis.test_annotate_video
+/tests.unit.behavior_analysis.test_annotate_video
 
 Tests for AnalyzeAnimal.annotate_video() method.
 """

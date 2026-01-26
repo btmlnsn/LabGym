@@ -1,5 +1,5 @@
 """
-LabGym.tests.unit.analysis.test_track_animal
+/tests.unit.analysis.test_track_animal
 
 Tests for AnalyzeAnimal.track_animal() method in analyzebehavior.py
 """

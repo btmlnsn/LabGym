@@ -1,5 +1,5 @@
 """
-LabGym.tests.unit.behavior_analysis.test_export_results
+/tests.unit.behavior_analysis.test_export_results
 
 Tests for AnalyzeAnimal.export_results() method.
 """

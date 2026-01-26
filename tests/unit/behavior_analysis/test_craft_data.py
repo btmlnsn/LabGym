@@ -1,5 +1,5 @@
 """
-LabGym.tests.unit.behavior_analysis.test_craft_data
+/tests.unit.behavior_analysis.test_craft_data
 
 Tests for AnalyzeAnimal.craft_data() method.
 """

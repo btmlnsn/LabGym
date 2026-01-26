@@ -1,5 +1,5 @@
 """
-tests/unit/frame_analysis/test_frame_cropping
+/tests.unit.frame_analysis.test_frame_cropping
 
 Tests for LabGym.tools frame cropping and blob extraction functions:
 - crop_frame()

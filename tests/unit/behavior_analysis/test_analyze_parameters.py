@@ -1,5 +1,5 @@
 """
-LabGym.tests.unit.behavior_analysis.test_analyze_parameters
+/tests.unit.behavior_analysis.test_analyze_parameters
 
 Tests for AnalyzeAnimal.analyze_parameters() method.
 """

@@ -1,5 +1,5 @@
 """
-LabGym.tests.unit.statistical.test_two_groups
+/tests.unit.statistical.test_two_groups
 
 Tests for the data_mining.two_groups() method
 This method performs two-group statistical comparisons using:

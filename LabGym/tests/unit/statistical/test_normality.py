@@ -1,5 +1,5 @@
 """
-LabGym.tests.unit.statistical.test_normality
+/tests.unit.statistical.test_normality
 
 Tests for the data_mining.normal() method
 This method performs Shapiro-Wilk normality testing on datasets

@@ -1,5 +1,5 @@
 """
-tests/unit/frame_analysis/test_pattern_images
+/tests.unit.frame_analysis.test_pattern_images
 
 Tests for LabGym.tools pattern image generation functions:
 - generate_patternimage()

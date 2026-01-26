@@ -1,5 +1,5 @@
 """
-LabGym.tests.unit.analysis.test_prepare_analysis
+/tests.unit.analysis.test_prepare_analysis
 
 Tests for AnalyzeAnimal.prepare_analysis() method in analyzebehavior.py
 """
