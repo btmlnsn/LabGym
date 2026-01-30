@@ -12,7 +12,7 @@ import pytest
 
 @pytest.fixture(scope="session")
 def wx_app():
-    from LabGym.ui.gui import wxutils
+    from LabGym import mywx
     import wx
     app = wx.App()
     yield app
