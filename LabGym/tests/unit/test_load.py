@@ -99,15 +99,12 @@ def test_import_LabGym_package():
 	submodules.extend(['detectron2', 'mywx', 'pkghash', 'selftest'])
 
 
-def test_imports_with_sysargv_initialized(monkeypatch):
+def test_imports_with_sysargv_initialized(mock_argv):
 	"""Test that some module imports don't raise exceptions.
 
 	These module imports must be tested with sys.argv initialized.
 	"""
-	# Arrange sys.argv.  Otherwise sys.argv contains pytest args, and
-	# myargparse raises an exception.
-	monkeypatch.setattr(sys, 'argv', ['dummy'])
-
+	
 	# Act
 	logging.info('import LabGym.__main__')
 	import LabGym.__main__

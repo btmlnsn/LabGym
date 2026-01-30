@@ -128,6 +128,7 @@ def test_get_list_of_subdirs(tmp_path):
 
 
 # def assert_userdata_dirs_are_separate(
+@pytest.mark.gui
 def test_assert_userdata_dirs_are_separate(
 		monkeypatch, tmp_path, wx_app, caplog):
 	"""Violate the assertion by passing in equivalent path1 & path2."""
@@ -153,6 +154,7 @@ def test_assert_userdata_dirs_are_separate(
 
 
 # def survey(
+@pytest.mark.gui
 def test_survey_case1(monkeypatch, tmp_path, wx_app, caplog):
 	"""violate check 1, and get SystemExit."""
 	# Arrange
@@ -182,6 +184,7 @@ def test_survey_case1(monkeypatch, tmp_path, wx_app, caplog):
 	assert expected_msg in caplog.text
 
 
+@pytest.mark.gui
 def test_survey_case2(monkeypatch, tmp_path, wx_app, caplog):
 	"""violate check 2, and get Warning."""
 	# Arrange
@@ -204,6 +207,7 @@ def test_survey_case2(monkeypatch, tmp_path, wx_app, caplog):
 	assert expected_msg in caplog.text
 
 
+@pytest.mark.gui
 def test_survey_case3(monkeypatch, tmp_path, wx_app, caplog):
 	"""violate check 3, and get Warning."""
 	# Arrange
@@ -225,6 +229,7 @@ def test_survey_case3(monkeypatch, tmp_path, wx_app, caplog):
 	assert expected_msg in caplog.text
 
 
+@pytest.mark.gui
 def test_survey_case4(monkeypatch, tmp_path, wx_app, caplog):
 	"""violate check 4, and get Warning."""
 	# Arrange

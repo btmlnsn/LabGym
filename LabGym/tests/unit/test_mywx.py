@@ -10,6 +10,7 @@ import pytest  # pytest: simple powerful testing with Python
 from LabGym import mywx  # on load, monkeypatch wx.App to be a singleton
 import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
 
+pytestmark = pytest.mark.gui  # All tests require wx
 
 # testdir = Path(__file__[:-3])  # dir containing support files for unit tests
 # assert testdir.is_dir()

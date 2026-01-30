@@ -42,6 +42,7 @@ def test_dummy():
 	# Assert not necessary.  This unit test passes unless exception was raised.
 
 
+@pytest.mark.gui
 def test_mydialog_skip(wx_app):
 	frame = wx.Frame(None)  # parent for the dialog
 	dialog = registration.RegFormDialog(frame)
@@ -70,6 +71,7 @@ def test_mydialog_skip(wx_app):
 	dialog.Destroy()  # request the dialog to self-destruct
 
 
+@pytest.mark.gui
 def test_mydialog_register(wx_app):
 	frame = wx.Frame(None)  # parent for the dialog
 	dialog = registration.RegFormDialog(frame)
@@ -114,6 +116,7 @@ def test_mydialog_register(wx_app):
 	dialog.Destroy()  # request the dialog to self-destruct
 
 
+@pytest.mark.gui
 def test__get_reginfo_from_form(monkeypatch, wx_app, tmp_path):
 
 	# frame = wx.Frame(None)  # parent for the dialog
