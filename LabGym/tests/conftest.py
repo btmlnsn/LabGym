@@ -273,6 +273,15 @@ def synthetic_video_file(tmp_path, sample_video_frames_bgr):
     fourcc = cv2.VideoWriter_fourcc(*'MJPG')
     fps = 30
     height, width = sample_video_frames_bgr[0].shape[:2]
+    
+
+@pytest.fixture
+def minimal_coco_annotation(tmp_path):
+    """
+    Minimal COCO-format annotation JSON for detector tests.
+    Two images, one category (animal). Returns path to JSON file.
+    """
+    import json
 
     writer = cv2.VideoWriter(str(video_path), fourcc, fps, (width, height))
     for frame in sample_video_frames_bgr:
@@ -587,3 +596,77 @@ def minimal_training_images(tmp_path, minimal_coco_annotation):
     """Directory of minimal training images matching minimal_coco_annotation"""
     return _make_minimal_images(tmp_path, minimal_coco_annotation, "training_images")
     
+    annotation = {
+        "info": {"description": "Minimal detector test", "version": "1.0"},
+        "licenses": [],
+        "images": [
+            {"id": 1, "file_name": "test_image_1.jpg", "width": 100, "height": 100},
+            {"id": 2, "file_name": "test_image_2.jpg", "width": 100, "height": 100},
+        ],
+        "categories": [
+            {"id": 0, "name": "__background__", "supercategory": "none"},
+            {"id": 1, "name": "animal", "supercategory": "animal"},
+        ],
+        "annotations": [
+            {
+                "id": 1,
+                "image_id": 1,
+                "category_id": 1,
+                "bbox": [30, 30, 40, 40],
+                "area": 1600,
+                "iscrowd": 0,
+                "segmentation": [[30, 30, 70, 30, 70, 70, 30, 70]],
+            },
+            {
+                "id": 2,
+                "image_id": 2,
+                "category_id": 1,
+                "bbox": [20, 20, 50, 50],
+                "area": 2500,
+                "iscrowd": 0,
+                "segmentation": [[20, 20, 70, 20, 70, 70, 20, 70]],
+            },
+        ],
+    }
+
+    path = tmp_path / "annotations.json"
+    with open(path, "w") as f:
+        json.dump(annotation, f)
+    return str(path)
+
+
+def _make_minimal_images(tmp_path, annotation_path, subdir):
+    """Write minimal BGR images to tmp_path/subdir from COCO annotation"""
+    import json
+    import cv2
+    import numpy as np
+
+    with open(annotation_path) as f:
+        data = json.load(f)
+
+    out_dir = tmp_path / subdir
+    out_dir.mkdir()
+    for img in data["images"]:
+        w, h = img["width"], img["height"]
+        arr = np.full((h, w, 3), 200, dtype= np.uint8)
+        
+        for ann in data["annotations"]:
+            if ann["image_id"] == img["id"]:
+                x, y, bw, bh = ann["bbox"]
+                arr[int(y) : int(y+ bh), int(x) : int(x + bw)] = [50, 50, 50]
+                break
+        cv2.imwrite(str(out_dir / img["file_name"]), arr)
+    return str(out_dir)
+
+
+@pytest.fixture
+def minimal_training_images(tmp_path, minimal_coco_annotation):
+    """Directory of minimal training images matching minimal_coco_annotation"""
+    return _make_minimal_images(tmp_path, minimal_coco_annotation, "training_images")
+
+
+@pytest.fixture
+def minimal_test_images(tmp_path, minimal_coco_annotation):
+    """Directory of minimal test images matching minimal_coco_annotation"""
+    return _make_minimal_images(tmp_path, minimal_coco_annotation, "test_images")
+
