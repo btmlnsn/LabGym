@@ -4,6 +4,7 @@ import os
 import re
 import sys
 import time
+from unittest.mock import MagicMock
 
 from packaging import version
 
@@ -106,6 +107,30 @@ def test_main_stale_labgym(monkeypatch):
 	# Assert... not needed.
 	# This unit test passes if __main__.main doesn't raise an exception.
 
+
+def test_main_selftest_flag_exits_with_result(monkeypatch):
+	"""When config has selftest True, main calls run_selftests and exits with its return code."""
+	from LabGym import mylogging
+	monkeypatch.setattr(mylogging, 'configure', lambda *args: None)
+
+	from LabGym import __main__
+	monkeypatch.setattr(__main__.probes, 'probes', lambda: None)
+	monkeypatch.setattr(__main__.gui_main, 'main_window', lambda: None)
+	monkeypatch.setattr(__main__.wx, 'GetApp', lambda: None)
+	monkeypatch.setattr(__main__.wx, 'App', lambda: None)
+
+	monkeypatch.setattr(__main__.config, 'get_config', lambda: {'selftest': True})
+	run_selftests_mock = MagicMock(return_value=0)
+	monkeypatch.setattr(__main__.selftest, 'run_selftests', run_selftests_mock)
+	exit_mock = MagicMock(side_effect=SystemExit(0))
+	monkeypatch.setattr(sys, 'exit', exit_mock)
+
+	with pytest.raises(SystemExit):
+		__main__.main()
+
+	run_selftests_mock.assert_called_once()
+	exit_mock.assert_called_once_with(0)
+	
 
 # from .exitstatus import exitstatus
 #
