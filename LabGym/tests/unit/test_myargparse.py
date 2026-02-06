@@ -125,3 +125,17 @@ def test_enable_(monkeypatch):
 
 	# Assert
 	assert result == {'enable': {'F1': False, 'F2': True}}
+
+
+def test_parse_args_selftest(monkeypatch):
+	"""--selftest sets selftest flag so bundled/CLI selftest path is used."""
+	# Arrange
+	monkeypatch.setattr(sys, 'argv', ['cmd', '--selftest'])
+
+	# Act
+	result = myargparse.parse_args()
+
+	# Assert
+	assert result == {'selftest': True}
+
+	
