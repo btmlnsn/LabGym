@@ -7,8 +7,10 @@ Shared pytest fixtures for LabGym tests
 # Standard library imports
 import sys
 
-# Related third party imports
+# Related third party imports and local application imports
 import pytest
+from LabGym import mywx
+import wx
 
 
 @pytest.fixture(scope="session")
@@ -692,7 +694,7 @@ def wx_notebook(wx_app):
 def mock_config(monkeypatch):
     """Minimal config.get_config() for GUI panels that call it at init"""
     from LabGym import config
-    minimal = {"detectors": None, "models": None}
+    minimal = {"detectors": ".", "models": "."}
     
     def _get_config(*args, **kwargs):
         return minimal
