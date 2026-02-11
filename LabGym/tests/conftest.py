@@ -18,6 +18,12 @@ def wx_app():
     app = wx.App()
     yield app
 
+    # Teardown so wx.App singleton is cleared for clean shutdown
+    wx.CallAfter(app.ExitMainLoop)
+    app.MainLoop()
+    del app
+    wx.App._instance = None
+
 
 @pytest.fixture
 def mock_argv(monkeypatch):
@@ -670,3 +676,26 @@ def minimal_test_images(tmp_path, minimal_coco_annotation):
     """Directory of minimal test images matching minimal_coco_annotation"""
     return _make_minimal_images(tmp_path, minimal_coco_annotation, "test_images")
 
+
+@pytest.fixture
+def wx_notebook(wx_app):
+    """AuiNotebook with hidden parent frame for GUI panels that need parent=notebook"""
+    import wx
+    import wx.aui
+    frame = wx.Frame(None)
+    notebook = wx.aui.AuiNotebook(frame)
+    yield notebook
+    frame.Destroy()
+
+
+@pytest.fixture
+def mock_config(monkeypatch):
+    """Minimal config.get_config() for GUI panels that call it at init"""
+    from LabGym import config
+    minimal = {"detectors": None, "models": None}
+    
+    def _get_config(*args, **kwargs):
+        return minimal
+
+    monkeypatch.setattr(config, "get_config", _get_config)
+    
