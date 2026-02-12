@@ -105,7 +105,7 @@ class TestTwoGroupsTestSelection:
             mock_ttest.assert_called()
 
 
-    def test_two_groups_always_uses_parametric_due_to_bug(self, tmp_path):
+    def test_two_groups_always_uses_parametric_due_to_bug(self, tmp_path, two_groups_non_normal):
         """
         BUG: Due to suspected normal() bug, two group comparisons ALWAYS use t-tests.
         
@@ -113,7 +113,7 @@ class TestTwoGroupsTestSelection:
         2 groups, data is always treated as normal regardless of distribution.
         """
 
-        data = create_two_group_data(10, 30, distribution='exponential')
+        data = copy.deepcopy(two_groups_non_normal)
 
         with patch('LabGym.minedata.stats.ttest_ind') as mock_ttest, \
              patch('LabGym.minedata.stats.mannwhitneyu') as mock_mw:
@@ -135,12 +135,12 @@ class TestTwoGroupsTestSelection:
             mock_mw.assert_not_called()
 
 
-    def test_two_groups_paired_always_uses_ttest_rel_due_to_bug(self, tmp_path):
+    def test_two_groups_paired_always_uses_ttest_rel_due_to_bug(self, tmp_path, two_groups_non_normal):
         """
         BUG: Paired two-group comparisons always use paired t-test
         """
 
-        data = create_two_group_data(10, 30, distribution = 'exponential')
+        data = copy.deepcopy(two_groups_non_normal)
 
         with patch('LabGym.minedata.stats.ttest_rel') as mock_ttest, \
              patch('LabGym.minedata.stats.wilcoxon') as mock_wilcoxon:
@@ -169,12 +169,12 @@ class TestTwoGroupsTestSelection:
             "so two_groups() always uses ttest_ind instead."
         )
     )
-    def test_non_normal_unpaired_uses_mannwhitneyu_spec(self, tmp_path):
+    def test_non_normal_unpaired_uses_mannwhitneyu_spec(self, tmp_path, two_groups_non_normal):
         """
         SPEC TEST: what should happen once normal() and two_groups() are fixed.
         Non-normal unpaired data should select Mann-Whitney U test.
         """
-        data = create_two_group_data(10, 30, distribution='exponential')
+        data = copy.deepcopy(two_groups_non_normal)
         
         with patch('LabGym.minedata.stats.mannwhitneyu') as mock_mw:
             mock_mw.return_value = MagicMock(pvalue=0.001)
@@ -198,12 +198,12 @@ class TestTwoGroupsTestSelection:
             "so two_groups() always uses ttest_rel instead."
         )
     )
-    def test_non_normal_paired_uses_wilcoxon_spec(self, tmp_path):
+    def test_non_normal_paired_uses_wilcoxon_spec(self, tmp_path, two_groups_non_normal):
         """
         SPEC TEST: what should happen once normal() and two_groups() are fixed.
         Non-normal paired data should select Wilcoxon signed-rank test.
         """
-        data = create_two_group_data(10, 30, distribution='exponential')
+        data = copy.deepcopy(two_groups_non_normal)
         
         with patch('LabGym.minedata.stats.wilcoxon') as mock_wilcoxon:
             mock_wilcoxon.return_value = MagicMock(pvalue=0.001)

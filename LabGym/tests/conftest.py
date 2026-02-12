@@ -95,19 +95,6 @@ def normal_series_large():
 
 
 @pytest.fixture
-def normal_series_small():
-    """
-    10-sample Series drawn from normal distrubtion.
-    Smaller sample, should still pass Shaprio-Wilk test.
-    """
-    import numpy as np
-    import pandas as pd
-    np.random.seed(42)
-
-    return pd.Series(np.random.normal(loc = 100, scale = 10, size = 10))
-
-
-@pytest.fixture
 def non_normal_series():
     """
     50-sample Series drawn from exponential distribution.
@@ -229,30 +216,6 @@ def two_groups_non_normal():
 
 
 @pytest.fixture
-def multi_groups_normal(request):
-    """
-    4 groups from normal distributions with increasing means.
-    Parametrizable via indirect fixture if needed.
-    """
-    import numpy as np
-    import pandas as pd
-    np.random.seed(42)
-
-    groups = []
-    for i in range(4):
-        np.random.seed(42 + i)
-        group = {
-            'walking': {
-                'speed': pd.Series(np.random.normal(10 + i * 5, 2, 30)),
-                'duration': pd.Series(np.random.normal(5 + i, 1, 30)),
-            }
-        }
-        groups.append(group)
-   
-    return groups
-
-
-@pytest.fixture
 def multi_groups_non_normal():
     """
     4 groups from exponential distributions (non-normal).
@@ -273,36 +236,4 @@ def multi_groups_non_normal():
         groups.append(group)
     
     return groups
-
-
-@pytest.fixture
-def control_group_normal():
-    """
-    A single control group (nromal distribution) for use with control_in parameter.
-    """
-    import numpy as np
-    import pandas as pd
-    np.random.seed(99)
-
-    return {
-        'walking': {
-            'speed': pd.Series(np.random.normal(10, 2, 30)),
-            'duration': pd.Series(np.random.normal(5, 1, 30)),
-        }
-    }
-
-
-@pytest.fixture
-def sample_file_names_two():
-    """File names for two-group comparisons"""
-    
-    return ['Group_A', 'Group_B']
-
-
-@pytest.fixture
-def sample_file_names_four():
-    """File names for four-group comparisons"""
-    
-    return ['Control', 'Treatment_1', 'Treatment_2', 'Treatment_3']
-    
 
