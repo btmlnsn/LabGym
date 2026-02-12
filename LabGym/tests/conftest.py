@@ -503,11 +503,4 @@ def _make_minimal_images(tmp_path, annotation_path, subdir):
 def minimal_training_images(tmp_path, minimal_coco_annotation):
     """Directory of minimal training images matching minimal_coco_annotation"""
     return _make_minimal_images(tmp_path, minimal_coco_annotation, "training_images")
-
-
-@pytest.fixture
-def minimal_test_images(tmp_path, minimal_coco_annotation):
-    """Directory of minimal test images matching minimal_coco_annotation"""
-    return _make_minimal_images(tmp_path, minimal_coco_annotation, "test_images")
-
     
