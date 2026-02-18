@@ -61,12 +61,12 @@ def create_two_group_data(mean_a, mean_b, std = 2, n = 30, distribution = 'norma
 class TestTwoGroupsTestSelection:
     """Test that the correct statistical test is selected based on data properties."""
 
-    def test_normal_unpaired_uses_ttest_ind(self, tmp_path):
+    def test_normal_unpaired_uses_ttest_ind(self, tmp_path, two_groups_normal_different):
         """
         Normal data + unpaired should use unpaired t-test (ttest_ind).
         """
 
-        data = create_two_group_data(10, 20, distribution='normal')
+        data = copy.deepcopy(two_groups_normal_different)
         
         with patch('LabGym.minedata.stats.ttest_ind') as mock_ttest:
             mock_ttest.return_value = MagicMock(pvalue=0.001)
@@ -83,12 +83,12 @@ class TestTwoGroupsTestSelection:
             mock_ttest.assert_called()
 
 
-    def test_normal_paired_uses_ttest_rel(self, tmp_path):
+    def test_normal_paired_uses_ttest_rel(self, tmp_path, two_groups_normal_different):
         """
         Normal data + paired should use paired t-test (ttest_rel).
         """
 
-        data = create_two_group_data(10, 20, distribution='normal')
+        data = copy.deepcopy(two_groups_normal_different)
         
         with patch('LabGym.minedata.stats.ttest_rel') as mock_ttest:
             mock_ttest.return_value = MagicMock(pvalue=0.001)
