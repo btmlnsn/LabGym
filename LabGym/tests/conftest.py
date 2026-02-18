@@ -700,4 +700,10 @@ def mock_config(monkeypatch):
         return minimal
 
     monkeypatch.setattr(config, "get_config", _get_config)
+
+
+@pytest.fixture
+def gui_panel_setup(wx_app, wx_notebook, mock_config):
+    """Composite fixture: wx app, notebook, and mocked config for GUI panel tests. Yields notebook as parent for panels."""
+    yield wx_notebook
     
