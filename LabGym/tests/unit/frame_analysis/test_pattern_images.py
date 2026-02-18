@@ -39,20 +39,14 @@ def sample_outline_sequence():
     return outlines
 
 
-@pytest.fixture
-def sample_frame_for_pattern():
-    """100x100 BGR frame for pattern image generation"""
-    return np.full((100, 100, 3), 200, dtype = np.uint8)
-
-
 
 class TestGeneratePatternimage:
     """Tests for generate_patternimage() function."""
 
-    def test_returns_array(self, sample_frame_for_pattern, sample_outline_sequence):
+    def test_returns_array(self, sample_background_frame, sample_outline_sequence):
         """Should return a numpy array."""
         result = generate_patternimage(
-            sample_frame_for_pattern,
+            sample_background_frame,
             sample_outline_sequence,
             inners=None,
             std=0
@@ -61,10 +55,10 @@ class TestGeneratePatternimage:
         assert isinstance(result, np.ndarray)
 
 
-    def test_output_is_color(self, sample_frame_for_pattern, sample_outline_sequence):
+    def test_output_is_color(self, sample_background_frame, sample_outline_sequence):
         """Output should be a color image (3 channels)."""
         result = generate_patternimage(
-            sample_frame_for_pattern,
+            sample_background_frame,
             sample_outline_sequence,
             inners=None,
             std=0
@@ -74,10 +68,10 @@ class TestGeneratePatternimage:
         assert result.shape[2] == 3
 
 
-    def test_without_inners(self, sample_frame_for_pattern, sample_outline_sequence):
+    def test_without_inners(self, sample_background_frame, sample_outline_sequence):
         """Should work without inner contours."""
         result = generate_patternimage(
-            sample_frame_for_pattern,
+            sample_background_frame,
             sample_outline_sequence,
             inners=None,
             std=0
@@ -86,31 +80,31 @@ class TestGeneratePatternimage:
         assert result is not None
 
 
-    def test_with_inners(self, sample_frame_for_pattern, sample_outline_sequence):
+    def test_with_inners(self, sample_background_frame, sample_outline_sequence):
         """Should work with inner contours provided."""
         # Create dummy inners (same as outlines for simplicity)
         inners = [[outline] for outline in sample_outline_sequence]
 
         result = generate_patternimage(
-            sample_frame_for_pattern,
+            sample_background_frame,
             sample_outline_sequence,
             inners=inners,
             std=0
         )
         assert result is not None
 
-    def test_std_parameter(self, sample_frame_for_pattern, sample_outline_sequence):
+    def test_std_parameter(self, sample_background_frame, sample_outline_sequence):
         """std parameter should filter inner contours."""
         inners = [[outline] for outline in sample_outline_sequence]
 
         result_std0 = generate_patternimage(
-            sample_frame_for_pattern,
+            sample_background_frame,
             sample_outline_sequence,
             inners=inners,
             std=0
         )
         result_std100 = generate_patternimage(
-            sample_frame_for_pattern,
+            sample_background_frame,
             sample_outline_sequence,
             inners=inners,
             std=100
@@ -121,10 +115,10 @@ class TestGeneratePatternimage:
         assert result_std100 is not None
 
 
-    def test_single_outline(self, sample_frame_for_pattern, sample_circular_contour):
+    def test_single_outline(self, sample_background_frame, sample_circular_contour):
         """Should work with single outline."""
         result = generate_patternimage(
-            sample_frame_for_pattern,
+            sample_background_frame,
             [sample_circular_contour],
             inners=None,
             std=0
@@ -133,10 +127,10 @@ class TestGeneratePatternimage:
         assert result is not None
 
 
-    def test_output_not_all_zeros(self, sample_frame_for_pattern, sample_outline_sequence):
+    def test_output_not_all_zeros(self, sample_background_frame, sample_outline_sequence):
         """Output should contain drawn contours (not all black)."""
         result = generate_patternimage(
-            sample_frame_for_pattern,
+            sample_background_frame,
             sample_outline_sequence,
             inners=None,
             std=0
@@ -149,7 +143,7 @@ class TestGeneratePatternimage:
 class TestGeneratePatternimageAll:
     """Tests for generate_patternimage_all() function."""
 
-    def test_returns_array(self, sample_frame_for_pattern, sample_outline_sequence):
+    def test_returns_array(self, sample_background_frame, sample_outline_sequence):
         """Should return a numpy array."""
         # outlines_list is a list of lists of contours (for multiple animals per frame)
         outlines_list = [[outline] for outline in sample_outline_sequence]
@@ -157,7 +151,7 @@ class TestGeneratePatternimageAll:
         y_bt, y_tp, x_lf, x_rt = 20, 80, 20, 80
 
         result = generate_patternimage_all(
-            sample_frame_for_pattern,
+            sample_background_frame,
             y_bt, y_tp, x_lf, x_rt,
             outlines_list,
             inners_list=None,
@@ -167,13 +161,13 @@ class TestGeneratePatternimageAll:
         assert isinstance(result, np.ndarray)
 
 
-    def test_without_inners(self, sample_frame_for_pattern, sample_outline_sequence):
+    def test_without_inners(self, sample_background_frame, sample_outline_sequence):
         """Should work without inner contours."""
         outlines_list = [[outline] for outline in sample_outline_sequence]
         y_bt, y_tp, x_lf, x_rt = 20, 80, 20, 80
 
         result = generate_patternimage_all(
-            sample_frame_for_pattern,
+            sample_background_frame,
             y_bt, y_tp, x_lf, x_rt,
             outlines_list,
             inners_list=None,
@@ -183,13 +177,13 @@ class TestGeneratePatternimageAll:
         assert result is not None
 
 
-    def test_output_shape_matches_crop(self, sample_frame_for_pattern, sample_outline_sequence):
+    def test_output_shape_matches_crop(self, sample_background_frame, sample_outline_sequence):
         """Output shape should match the specified crop region."""
         outlines_list = [[outline] for outline in sample_outline_sequence]
         y_bt, y_tp, x_lf, x_rt = 20, 80, 10, 90
 
         result = generate_patternimage_all(
-            sample_frame_for_pattern,
+            sample_background_frame,
             y_bt, y_tp, x_lf, x_rt,
             outlines_list,
             inners_list=None,
@@ -206,7 +200,7 @@ class TestGeneratePatternimageAll:
 class TestGeneratePatternimageInteract:
     """Tests for generate_patternimage_interact() function."""
 
-    def test_returns_array(self, sample_frame_for_pattern, sample_outline_sequence):
+    def test_returns_array(self, sample_background_frame, sample_outline_sequence):
         """Should return a numpy array."""
         # For interact, we need outlines for "self" and "other" animal
         other_outlines = []
@@ -220,7 +214,7 @@ class TestGeneratePatternimageInteract:
             other_outlines.append([contour])
 
         result = generate_patternimage_interact(
-            sample_frame_for_pattern,
+            sample_background_frame,
             sample_outline_sequence,
             other_outlines,
             inners=None,
@@ -231,7 +225,7 @@ class TestGeneratePatternimageInteract:
         assert isinstance(result, np.ndarray)
 
 
-    def test_two_animals_different_colors(self, sample_frame_for_pattern, sample_outline_sequence):
+    def test_two_animals_different_colors(self, sample_background_frame, sample_outline_sequence):
         """Two animals should be drawn (pattern should have content)."""
         other_outlines = []
         for i in range(15):
@@ -244,7 +238,7 @@ class TestGeneratePatternimageInteract:
             other_outlines.append([contour])
 
         result = generate_patternimage_interact(
-            sample_frame_for_pattern,
+            sample_background_frame,
             sample_outline_sequence,
             other_outlines,
             inners=None,
