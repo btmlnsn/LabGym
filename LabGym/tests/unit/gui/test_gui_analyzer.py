@@ -20,27 +20,27 @@ from LabGym.gui_analyzer import (
 pytestmark = pytest.mark.gui
 
 
-def test_panel_analyze_behaviors_instantiation(wx_app, wx_notebook, mock_config):
+def test_panel_analyze_behaviors_instantiation(gui_panel_setup):
     """PanelLv2_AnalyzeBehaviors instantiates."""
-    panel = PanelLv2_AnalyzeBehaviors(wx_notebook)
+    panel = PanelLv2_AnalyzeBehaviors(gui_panel_setup)
     assert panel is not None
 
 
-def test_panel_mine_results_instantiation(wx_app, wx_notebook, mock_config):
+def test_panel_mine_results_instantiation(gui_panel_setup):
     """PanelLv2_MineResults instantiates."""
-    panel = PanelLv2_MineResults(wx_notebook)
+    panel = PanelLv2_MineResults(gui_panel_setup)
     assert panel is not None
 
 
-def test_panel_plot_behaviors_instantiation(wx_app, wx_notebook, mock_config):
+def test_panel_plot_behaviors_instantiation(gui_panel_setup):
     """PanelLv2_PlotBehaviors instantiates."""
-    panel = PanelLv2_PlotBehaviors(wx_notebook)
+    panel = PanelLv2_PlotBehaviors(gui_panel_setup)
     assert panel is not None
 
 
-def test_panel_calculate_distances_instantiation(wx_app, wx_notebook, mock_config):
+def test_panel_calculate_distances_instantiation(gui_panel_setup):
     """PanelLv2_CalculateDistances instantiates."""
-    panel = PanelLv2_CalculateDistances(wx_notebook)
+    panel = PanelLv2_CalculateDistances(gui_panel_setup)
     assert panel is not None
 
     

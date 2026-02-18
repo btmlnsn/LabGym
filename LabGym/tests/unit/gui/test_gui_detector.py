@@ -18,22 +18,22 @@ from LabGym.gui_detector import (
 pytestmark = pytest.mark.gui
 
 
-def test_panel_generate_images_instantiation(wx_app, wx_notebook, mock_config):
+def test_panel_generate_images_instantiation(gui_panel_setup):
     """PanelLv2_GenerateImages instantiates and shows default labels."""
-    panel = PanelLv2_GenerateImages(wx_notebook)
+    panel = PanelLv2_GenerateImages(gui_panel_setup)
     assert panel is not None
     assert panel.text_inputvideos.GetLabel() == "None."
     assert panel.text_outputfolder.GetLabel() == "None."
 
 
-def test_panel_train_detectors_instantiation(wx_app, wx_notebook, mock_config):
+def test_panel_train_detectors_instantiation(gui_panel_setup):
     """PanelLv2_TrainDetectors instantiates."""
-    panel = PanelLv2_TrainDetectors(wx_notebook)
+    panel = PanelLv2_TrainDetectors(gui_panel_setup)
     assert panel is not None
 
 
-def test_panel_test_detectors_instantiation(wx_app, wx_notebook, mock_config):
+def test_panel_test_detectors_instantiation(gui_panel_setup):
     """PanelLv2_TestDetectors instantiates."""
-    panel = PanelLv2_TestDetectors(wx_notebook)
+    panel = PanelLv2_TestDetectors(gui_panel_setup)
     assert panel is not None
 

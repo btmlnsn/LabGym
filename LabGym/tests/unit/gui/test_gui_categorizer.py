@@ -19,27 +19,27 @@ from LabGym.gui_categorizer import (
 pytestmark = pytest.mark.gui
 
 
-def test_panel_generate_examples_instantiation(wx_app, wx_notebook, mock_config):
+def test_panel_generate_examples_instantiation(gui_panel_setup):
     """PanelLv2_GenerateExamples instantiates and shows default path label."""
-    panel = PanelLv2_GenerateExamples(wx_notebook)
+    panel = PanelLv2_GenerateExamples(gui_panel_setup)
     assert panel is not None
     assert panel.text_inputvideos.GetLabel() == "None."
 
 
-def test_panel_train_categorizers_instantiation(wx_app, wx_notebook, mock_config):
+def test_panel_train_categorizers_instantiation(gui_panel_setup):
     """PanelLv2_TrainCategorizers instantiates."""
-    panel = PanelLv2_TrainCategorizers(wx_notebook)
+    panel = PanelLv2_TrainCategorizers(gui_panel_setup)
     assert panel is not None
 
 
-def test_panel_sort_behaviors_instantiation(wx_app, wx_notebook, mock_config):
+def test_panel_sort_behaviors_instantiation(gui_panel_setup):
     """PanelLv2_SortBehaviors instantiates."""
-    panel = PanelLv2_SortBehaviors(wx_notebook)
+    panel = PanelLv2_SortBehaviors(gui_panel_setup)
     assert panel is not None
 
 
-def test_panel_test_categorizers_instantiation(wx_app, wx_notebook, mock_config):
+def test_panel_test_categorizers_instantiation(gui_panel_setup):
     """PanelLv2_TestCategorizers instantiates."""
-    panel = PanelLv2_TestCategorizers(wx_notebook)
+    panel = PanelLv2_TestCategorizers(gui_panel_setup)
     assert panel is not None
 
