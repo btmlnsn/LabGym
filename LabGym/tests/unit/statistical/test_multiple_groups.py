@@ -78,13 +78,13 @@ class TestMultipleGroupsTestSelection:
     """Test that the correct statistical test is selected."""
 
     @pytest.mark.xfail(reason="Bug in minedata.py: pd.DataFrame(tukey) fails")
-    def test_normal_data_uses_anova(self, tmp_path):
+    def test_normal_data_uses_anova(self, tmp_path, multi_groups_normal):
         """
         Normal data should use ANOVA (f_oneway).
         NOTE: This fails due to bug in minedata.py line 160.
         """
 
-        data = create_multi_group_data(n_groups=4, distribution='normal')
+        data = copy.deepcopy(multi_groups_normal)
         
         #Commented out until bug is fixed:
         # with patch('LabGym.minedata.stats.f_oneway') as mock_anova:
@@ -114,12 +114,12 @@ class TestMultipleGroupsTestSelection:
         dm.writer.close()
 
 
-    def test_non_normal_unpaired_uses_kruskal(self, tmp_path):
+    def test_non_normal_unpaired_uses_kruskal(self, tmp_path, multi_groups_non_normal):
         """
         Non-normal + unpaired data should use Kruskal-Wallis.
         """
 
-        data = create_multi_group_data(n_groups=4, distribution='exponential')
+        data = copy.deepcopy(multi_groups_non_normal)
         
         with patch('LabGym.minedata.stats.kruskal') as mock_kruskal:
             mock_kruskal.return_value = MagicMock(pvalue=0.001)
@@ -136,12 +136,12 @@ class TestMultipleGroupsTestSelection:
             mock_kruskal.assert_called()
 
 
-    def test_non_normal_paired_uses_friedman(self, tmp_path):
+    def test_non_normal_paired_uses_friedman(self, tmp_path, multi_groups_non_normal):
         """
         Non-normal + paired data should use Friedman test.
         """
 
-        data = create_multi_group_data(n_groups=4, distribution='exponential')
+        data = copy.deepcopy(multi_groups_non_normal)
         
         with patch('LabGym.minedata.stats.friedmanchisquare') as mock_friedman:
             mock_friedman.return_value = MagicMock(pvalue=0.001)
@@ -164,13 +164,13 @@ class TestMultipleGroupsPostHoc:
     """Test that correct post-hoc test is selected."""
 
     @pytest.mark.xfail(reason="Bug in minedata.py: pd.DataFrame(tukey) fails")
-    def test_anova_without_control_uses_tukey(self, tmp_path):
+    def test_anova_without_control_uses_tukey(self, tmp_path, multi_groups_normal):
         """
         ANOVA without control group should use Tukey HSD post-hoc.
         NOTE: This fails because pd.DataFrame(TukeyHSDResult) doesn't work
         """
 
-        data = create_multi_group_data(n_groups=4, distribution='normal')
+        data = copy.deepcopy(multi_groups_normal)
         
         # Commented out until bug is fixed:
         # with patch('LabGym.minedata.stats.tukey_hsd') as mock_tukey:
@@ -231,12 +231,12 @@ class TestMultipleGroupsPostHoc:
             mock_dunnett.assert_called()
 
 
-    def test_non_normal_uses_dunn_posthoc(self, tmp_path):
+    def test_non_normal_uses_dunn_posthoc(self, tmp_path, multi_groups_non_normal):
         """
         Non-normal data should use Dunn's post-hoc test.
         """
 
-        data = create_multi_group_data(n_groups=4, distribution='exponential')
+        data = copy.deepcopy(multi_groups_non_normal)
         
         with patch('LabGym.minedata.sp.posthoc_dunn') as mock_dunn:
             mock_dunn.return_value = pd.DataFrame(

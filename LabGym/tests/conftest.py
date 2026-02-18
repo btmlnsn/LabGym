@@ -237,3 +237,26 @@ def multi_groups_non_normal():
     
     return groups
 
+
+@pytest.fixture
+def multi_groups_normal():
+    """
+    4 groups from normal distributions with increasing means
+    """
+    import numpy as np
+    import pandas as pd
+    np.random.seed(42)
+
+    groups = []
+    for i in range(4):
+        np.random.seed(42 + i)
+        group = {
+            'walking': {
+                'speed': pd.Series(np.random.normal(10 + i * 5, 2, 30)),
+                'duration': pd.Series(np.random.normal(5 + i, 1, 30)),
+            }
+        }
+        
+        groups.append(group)
+    
+    return groups
