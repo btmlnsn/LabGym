@@ -674,12 +674,6 @@ def minimal_training_images(tmp_path, minimal_coco_annotation):
 
 
 @pytest.fixture
-def minimal_test_images(tmp_path, minimal_coco_annotation):
-    """Directory of minimal test images matching minimal_coco_annotation"""
-    return _make_minimal_images(tmp_path, minimal_coco_annotation, "test_images")
-
-
-@pytest.fixture
 def wx_notebook(wx_app):
     """AuiNotebook with hidden parent frame for GUI panels that need parent=notebook"""
     import wx
