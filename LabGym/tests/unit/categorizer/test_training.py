@@ -35,9 +35,13 @@ from LabGym.categorizer import Categorizers
 # The proper fix is to pass zero_division=0 in the application; until then we
 # suppress this warning here so test output stays clean. Scoped to this module only.
 # See: sklearn.metrics.classification_report(zero_division=...).
-pytestmark = pytest.mark.filterwarnings(
-    "ignore:Precision is ill-defined and being set to 0.0 in labels with no predicted samples:UserWarning"
-)
+pytestmark = [
+    pytest.mark.slow,
+    pytest.mark.integration,
+    pytest.mark.filterwarnings(
+        "ignore:Precision is ill-defined and being set to 0.0 in labels with no predicted samples:UserWarning"
+    ),
+]
 
 @pytest.fixture
 def minimal_training_data_dir(tmp_path):
