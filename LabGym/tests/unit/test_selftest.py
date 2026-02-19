@@ -13,6 +13,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 import wx
 
+pytestmark = pytest.mark.gui
+
 # Local application/library specific imports
 from LabGym import selftest
 
