@@ -263,20 +263,6 @@ def multi_groups_normal():
 
 
 @pytest.fixture
-def sample_file_names_four():
-    """File names for four-group comparisons"""
-    
-    return ['Control', 'Treatment_1', 'Treatment_2', 'Treatment_3'] 
-
-
-@pytest.fixture
-def sample_file_names_four():
-    """File names for four-group comparisons"""
-    
-    return ['Control', 'Treatment_1', 'Treatment_2', 'Treatment_3']
-
-
-@pytest.fixture
 def synthetic_video_file(tmp_path, sample_video_frames_bgr):
     """
     Create a temporary video file from synthetic frames.
