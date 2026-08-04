@@ -34,6 +34,7 @@ import matplotlib as mpl
 import pandas as pd
 import torch
 import wx
+import wx.lib.agw.hyperlink as hl
 
 # Local application/library specific imports.
 from .analyzebehavior import AnalyzeAnimal
@@ -41,6 +42,7 @@ from .analyzebehavior_dt import AnalyzeAnimalDetector
 from LabGym import config
 from .minedata import data_mining
 from .tools import plot_events, parse_all_events_file, calculate_distances
+from .gui_utils import add_info_button, INFO_COLOUR_S3, INFO_COLOUR_S4
 
 
 class ColorPicker(wx.Dialog):
@@ -142,6 +144,7 @@ class PanelLv2_AnalyzeBehaviors(wx.Panel):
 
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
+		add_info_button(self, boxsizer, INFO_COLOUR_S3)
 
 		module_selectcategorizer=wx.BoxSizer(wx.HORIZONTAL)
 		button_selectcategorizer=wx.Button(panel,label='Select a Categorizer for\nbehavior classification',size=(300,40))
@@ -240,6 +243,13 @@ class PanelLv2_AnalyzeBehaviors(wx.Panel):
 		boxsizer.Add(0,5,0)
 		boxsizer.Add(button_analyze,0,wx.RIGHT|wx.ALIGN_RIGHT,90)
 		boxsizer.Add(0,10,0)
+
+		bottom_row = wx.BoxSizer(wx.HORIZONTAL)
+		link = hl.HyperLinkCtrl(panel, 0, 'Background Subtraction Tutorial Video', URL='https://youtu.be/wosicTLHVf8?si=g23S7dIzrfdm6fzo')
+		bottom_row.Add(link, 0, wx.LEFT, 10)
+		bottom_row.AddStretchSpacer()
+		boxsizer.Add(bottom_row, 0, wx.EXPAND)
+		boxsizer.Add(0, 10, 0)
 
 		panel.SetSizer(boxsizer)
 
@@ -1134,6 +1144,7 @@ class PanelLv2_MineResults(wx.Panel):
 
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
+		add_info_button(self, boxsizer, INFO_COLOUR_S4)
 
 		module_inputfolder=wx.BoxSizer(wx.HORIZONTAL)
 		button_inputfolder=wx.Button(panel,label='Select the folder that contains\nthe LabGym analysis output folders',size=(300,40))
@@ -1309,6 +1320,7 @@ class PanelLv2_PlotBehaviors(wx.Panel):
 
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
+		add_info_button(self, boxsizer, INFO_COLOUR_S4)
 
 		module_inputfile=wx.BoxSizer(wx.HORIZONTAL)
 		button_inputfile=wx.Button(panel,label='Select the\nall_events.xlsx file',size=(300,40))
@@ -1425,6 +1437,7 @@ class PanelLv2_CalculateDistances(wx.Panel):
 
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
+		add_info_button(self, boxsizer, INFO_COLOUR_S4)
 
 		module_inputfolder=wx.BoxSizer(wx.HORIZONTAL)
 		button_inputfolder=wx.Button(panel,label='Select the folder that stores\nLabGym analysis results',size=(300,40))

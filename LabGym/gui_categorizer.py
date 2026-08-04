@@ -34,6 +34,7 @@ logger.debug('loading %s', __file__)
 import cv2
 import numpy as np
 import wx
+import wx.richtext
 
 # Local application/library specific imports.
 logger.debug('importing %s ...', '.analyzebehavior')
@@ -45,7 +46,7 @@ logger.debug('importing %s done', '.analyzebehavior_dt')
 from .categorizer import Categorizers
 from LabGym import config
 from .tools import sort_examples_from_csv
-from .gui_utils import add_or_select_notebook_page
+from .gui_utils import add_or_select_notebook_page, add_info_button, INFO_COLOUR_S3
 
 
 class PanelLv2_GenerateExamples(wx.Panel):
@@ -100,6 +101,7 @@ class PanelLv2_GenerateExamples(wx.Panel):
 
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
+		add_info_button(self, boxsizer, INFO_COLOUR_S3)
 
 		module_specifymode=wx.BoxSizer(wx.HORIZONTAL)
 		button_specifymode=wx.Button(panel,label='Specify the mode of behavior\nexamples to generate',size=(300,40))
@@ -701,6 +703,7 @@ class PanelLv2_SortBehaviors(wx.Panel):
 
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
+		add_info_button(self, boxsizer, INFO_COLOUR_S3)
 		boxsizer.Add(0,40,0)
 
 		button_sortexamples=wx.Button(panel,label='Sort Examples (LabGym UI)',size=(300,40))
@@ -756,6 +759,7 @@ class PanelLv3_SortExamples(wx.Panel):
 
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
+		add_info_button(self, boxsizer, INFO_COLOUR_S3)
 
 		module_inputfolder=wx.BoxSizer(wx.HORIZONTAL)
 		button_inputfolder=wx.Button(panel,label='Select the folder that stores\nunsorted behavior examples',size=(300,40))
@@ -1001,6 +1005,7 @@ class PanelLv3_SortExamplesCSV(wx.Panel):
 
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
+		add_info_button(self, boxsizer, INFO_COLOUR_S3)
 
 		module_inputexamples=wx.BoxSizer(wx.HORIZONTAL)
 		button_inputexamples=wx.Button(panel,label='Select the folder that stores\nthe unsorted behavior examples',size=(300,40))
@@ -1112,6 +1117,7 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
+		add_info_button(self, boxsizer, INFO_COLOUR_S3)
 
 		module_inputexamples=wx.BoxSizer(wx.HORIZONTAL)
 		button_inputexamples=wx.Button(panel,label='Select the folder that stores\nthe sorted behavior examples',size=(300,40))
@@ -1122,6 +1128,12 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 		module_inputexamples.Add(self.text_inputexamples,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		boxsizer.Add(0,10,0)
 		boxsizer.Add(module_inputexamples,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(0,5,0)
+
+		self.button_view_sorted_counts=wx.Button(panel,label='View Behavior Counts',size=(300,40))
+		self.button_view_sorted_counts.Bind(wx.EVT_BUTTON,self.show_sorted_count_popup)
+		self.button_view_sorted_counts.Hide()
+		boxsizer.Add(self.button_view_sorted_counts,0,wx.ALIGN_CENTER)
 		boxsizer.Add(0,5,0)
 
 		module_renameexample=wx.BoxSizer(wx.HORIZONTAL)
@@ -1181,6 +1193,12 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 		boxsizer.Add(module_trainingfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		boxsizer.Add(0,5,0)
 
+		self.button_view_counts=wx.Button(panel,label='View Behavior Counts',size=(300,40))
+		self.button_view_counts.Bind(wx.EVT_BUTTON,self.show_count_popup)
+		self.button_view_counts.Hide()
+		boxsizer.Add(self.button_view_counts,0,wx.ALIGN_CENTER)
+		boxsizer.Add(0,5,0)
+
 		module_augmentation=wx.BoxSizer(wx.HORIZONTAL)
 		button_augmentation=wx.Button(panel,label='Specify the methods to\naugment training examples',size=(300,40))
 		button_augmentation.Bind(wx.EVT_BUTTON,self.specify_augmentation)
@@ -1213,12 +1231,268 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 		self.Show(True)
 
 
+	def _count_examples(self,folder_path):
+		try:
+			entries=os.listdir(folder_path)
+		except OSError:
+			return {}
+		counts={}
+		avis=[f for f in entries if f.endswith('.avi')]
+		files=avis if avis else [f for f in entries if f.endswith('.jpg')]
+		for f in files:
+			base=os.path.splitext(f)[0]
+			if '_' in base:
+				category=base.split('_',1)[1]
+				counts[category]=counts.get(category,0)+1
+		return counts
+
+
+	def _update_count_display(self,folder_path):
+		counts=self._count_examples(folder_path)
+		if len(counts)<2:
+			self._counts={}
+			self.button_view_counts.Hide()
+			self.Layout()
+			return
+		self._counts=counts
+		self.button_view_counts.Show()
+		self.Layout()
+
+
+	def _render_legend(self,rtc,threshold):
+		rtc.Clear()
+		leg=wx.richtext.RichTextAttr()
+		leg.SetFontSize(10)
+		leg.SetFontStyle(wx.FONTSTYLE_ITALIC)
+		leg.SetFontWeight(wx.FONTWEIGHT_BOLD)
+		leg.SetTextColour(wx.Colour(0,0,0))
+		leg_red=wx.richtext.RichTextAttr()
+		leg_red.SetFontSize(10)
+		leg_red.SetFontStyle(wx.FONTSTYLE_ITALIC)
+		leg_red.SetFontWeight(wx.FONTWEIGHT_BOLD)
+		leg_red.SetTextColour(wx.Colour(180,0,0))
+		leg_hl=wx.richtext.RichTextAttr()
+		leg_hl.SetFontSize(10)
+		leg_hl.SetFontStyle(wx.FONTSTYLE_ITALIC)
+		leg_hl.SetFontWeight(wx.FONTWEIGHT_BOLD)
+		leg_hl.SetTextColour(wx.Colour(0,0,0))
+		leg_hl.SetBackgroundColour(wx.YELLOW)
+		rtc.BeginStyle(leg_red)
+		rtc.WriteText('Red text')
+		rtc.EndStyle()
+		rtc.BeginStyle(leg)
+		rtc.WriteText(f': Example count is below {threshold} (minimum threshold)\n')
+		rtc.EndStyle()
+		rtc.BeginStyle(leg_hl)
+		rtc.WriteText('Yellow highlight')
+		rtc.EndStyle()
+		rtc.BeginStyle(leg)
+		rtc.WriteText(': Example count is outside 1 standard deviation from the mean\n')
+		rtc.EndStyle()
+
+	def _make_header_panel(self,parent,title,threshold,bg):
+		panel=wx.Panel(parent)
+		panel.SetBackgroundColour(bg)
+		vs=wx.BoxSizer(wx.VERTICAL)
+		vs.Add((0,12))
+		title_lbl=wx.StaticText(panel,label=title,style=wx.ALIGN_CENTRE_HORIZONTAL)
+		title_lbl.SetFont(wx.Font(18,wx.FONTFAMILY_DEFAULT,wx.FONTSTYLE_NORMAL,wx.FONTWEIGHT_BOLD))
+		title_lbl.SetForegroundColour(wx.Colour(0,0,0))
+		vs.Add(title_lbl,0,wx.EXPAND|wx.BOTTOM,6)
+		rtc_leg=wx.richtext.RichTextCtrl(panel,size=(-1,75),style=wx.TE_READONLY|wx.NO_BORDER|wx.TE_NO_VSCROLL)
+		rtc_leg.SetBackgroundColour(bg)
+		rtc_leg.SetEditable(False)
+		self._render_legend(rtc_leg,threshold)
+		vs.Add(rtc_leg,0,wx.EXPAND)
+		panel.SetSizer(vs)
+		return panel,rtc_leg
+
+
+	def _render_body(self,rtc,counts,threshold):
+		values=list(counts.values())
+		mean=sum(values)/len(values)
+		std=(sum((v-mean)**2 for v in values)/len(values))**0.5
+		rtc.Clear()
+		names=sorted(counts)
+		i=0
+		while i<len(names):
+			chunk=names[i:i+3]
+			if len(chunk)==3:
+				row_text='  |  '.join(f'{n}: {counts[n]} examples' for n in chunk)
+				if len(row_text)>200:
+					chunk=names[i:i+2]
+			row=chunk
+			i+=len(row)
+			for i_item,name in enumerate(row):
+				count=counts[name]
+				attr=wx.richtext.RichTextAttr()
+				attr.SetTextColour(wx.Colour(180,0,0) if count<threshold else wx.Colour(0,0,0))
+				if std>0 and abs(count-mean)>std:
+					attr.SetBackgroundColour(wx.YELLOW)
+				rtc.BeginStyle(attr)
+				rtc.WriteText(f'{name}: {count} examples')
+				rtc.EndStyle()
+				if i_item<len(row)-1:
+					sep_attr=wx.richtext.RichTextAttr()
+					sep_attr.SetTextColour(wx.Colour(0,0,0))
+					sep_attr.SetFontWeight(wx.FONTWEIGHT_BOLD)
+					rtc.BeginStyle(sep_attr)
+					rtc.WriteText('  |  ')
+					rtc.EndStyle()
+			rtc.WriteText('\n')
+			below_t=[(name,threshold-counts[name]) for name in row if counts[name]<threshold]
+			if below_t:
+				add_attr=wx.richtext.RichTextAttr()
+				add_attr.SetFontStyle(wx.FONTSTYLE_ITALIC)
+				add_attr.SetFontSize(10)
+				add_attr.SetTextColour(wx.Colour(60,60,60))
+				rtc.BeginStyle(add_attr)
+				rtc.WriteText('    add: '+', '.join(f'{n} ({needed})' for n,needed in below_t)+'\n')
+				rtc.EndStyle()
+
+
+	def show_count_popup(self,event):
+		counts=getattr(self,'_counts',{})
+		if len(counts)<2:
+			return
+		if not hasattr(self,'_count_threshold'):
+			self._count_threshold=250
+		threshold=self._count_threshold
+		n=len(counts)
+		n_rows=-(-n//4)
+		popup_w=820
+		popup_h=max(220,min(400,n_rows*55+190))
+		popup=wx.PopupTransientWindow(self,wx.NO_BORDER)
+		bg=wx.Colour(255,255,255)
+		popup.SetBackgroundColour(bg)
+		def on_paint(evt,_p=popup):
+			dc=wx.PaintDC(_p)
+			dc.SetPen(wx.Pen(wx.BLACK,1))
+			dc.SetBrush(wx.TRANSPARENT_BRUSH)
+			w,h=_p.GetClientSize()
+			dc.DrawRectangle(0,0,w,h)
+		popup.Bind(wx.EVT_PAINT,on_paint)
+		outer=wx.BoxSizer(wx.VERTICAL)
+		header_panel,rtc_leg=self._make_header_panel(popup,'Prepared Training Examples',threshold,bg)
+		outer.Add(header_panel,0,wx.EXPAND|wx.LEFT|wx.RIGHT|wx.TOP,1)
+		ctrl_panel=wx.Panel(popup)
+		ctrl_panel.SetBackgroundColour(bg)
+		ctrl_sizer=wx.BoxSizer(wx.HORIZONTAL)
+		lbl=wx.StaticText(ctrl_panel,label='Threshold:')
+		spin=wx.SpinCtrl(ctrl_panel,value=str(threshold),min=1,max=99999,initial=threshold)
+		btn=wx.Button(ctrl_panel,label='Apply')
+		ctrl_sizer.Add(lbl,0,wx.ALIGN_CENTER_VERTICAL|wx.LEFT,8)
+		ctrl_sizer.Add(spin,0,wx.ALIGN_CENTER_VERTICAL|wx.LEFT,5)
+		ctrl_sizer.Add(btn,0,wx.ALIGN_CENTER_VERTICAL|wx.LEFT,5)
+		ctrl_panel.SetSizer(ctrl_sizer)
+		outer.Add(ctrl_panel,0,wx.EXPAND|wx.LEFT|wx.RIGHT,2)
+		outer.Add((0,20))
+		rtc_counts=wx.richtext.RichTextCtrl(popup,style=wx.TE_READONLY|wx.NO_BORDER)
+		rtc_counts.SetBackgroundColour(bg)
+		rtc_counts.SetEditable(False)
+		self._render_body(rtc_counts,counts,threshold)
+		outer.Add(rtc_counts,1,wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM,1)
+		popup.SetSizer(outer)
+		popup.SetSize(popup_w,popup_h)
+		def on_apply(evt):
+			t=spin.GetValue()
+			self._count_threshold=t
+			self._render_legend(rtc_leg,t)
+			self._render_body(rtc_counts,counts,t)
+		btn.Bind(wx.EVT_BUTTON,on_apply)
+		frame=self.GetTopLevelParent()
+		fr=frame.GetRect()
+		popup.SetPosition(wx.Point(fr.x+(fr.width-popup_w)//2,fr.y+(fr.height-popup_h)//2))
+		popup.Popup()
+
+
+	def _count_from_subfolders(self,folder_path):
+		try:
+			subfolders=[d for d in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path,d))]
+		except OSError:
+			return {}
+		counts={}
+		for subfolder in subfolders:
+			path=os.path.join(folder_path,subfolder)
+			avis=[f for f in os.listdir(path) if f.endswith('.avi')]
+			counts[subfolder]=len(avis) if avis else len([f for f in os.listdir(path) if f.endswith('.jpg')])
+		return counts
+
+
+	def _update_sorted_count_display(self,folder_path):
+		counts=self._count_from_subfolders(folder_path)
+		if len(counts)<2:
+			self._sorted_counts={}
+			self.button_view_sorted_counts.Hide()
+			self.Layout()
+			return
+		self._sorted_counts=counts
+		self.button_view_sorted_counts.Show()
+		self.Layout()
+
+
+	def show_sorted_count_popup(self,event):
+		counts=getattr(self,'_sorted_counts',{})
+		if len(counts)<2:
+			return
+		if not hasattr(self,'_sorted_count_threshold'):
+			self._sorted_count_threshold=250
+		threshold=self._sorted_count_threshold
+		n=len(counts)
+		n_rows=-(-n//4)
+		popup_w=820
+		popup_h=max(220,min(400,n_rows*55+190))
+		popup=wx.PopupTransientWindow(self,wx.NO_BORDER)
+		bg=wx.Colour(255,255,255)
+		popup.SetBackgroundColour(bg)
+		def on_paint(evt,_p=popup):
+			dc=wx.PaintDC(_p)
+			dc.SetPen(wx.Pen(wx.BLACK,1))
+			dc.SetBrush(wx.TRANSPARENT_BRUSH)
+			w,h=_p.GetClientSize()
+			dc.DrawRectangle(0,0,w,h)
+		popup.Bind(wx.EVT_PAINT,on_paint)
+		outer=wx.BoxSizer(wx.VERTICAL)
+		header_panel,rtc_leg=self._make_header_panel(popup,'Sorted Behavior Examples',threshold,bg)
+		outer.Add(header_panel,0,wx.EXPAND|wx.LEFT|wx.RIGHT|wx.TOP,1)
+		ctrl_panel=wx.Panel(popup)
+		ctrl_panel.SetBackgroundColour(bg)
+		ctrl_sizer=wx.BoxSizer(wx.HORIZONTAL)
+		lbl=wx.StaticText(ctrl_panel,label='Threshold:')
+		spin=wx.SpinCtrl(ctrl_panel,value=str(threshold),min=1,max=99999,initial=threshold)
+		btn=wx.Button(ctrl_panel,label='Apply')
+		ctrl_sizer.Add(lbl,0,wx.ALIGN_CENTER_VERTICAL|wx.LEFT,8)
+		ctrl_sizer.Add(spin,0,wx.ALIGN_CENTER_VERTICAL|wx.LEFT,5)
+		ctrl_sizer.Add(btn,0,wx.ALIGN_CENTER_VERTICAL|wx.LEFT,5)
+		ctrl_panel.SetSizer(ctrl_sizer)
+		outer.Add(ctrl_panel,0,wx.EXPAND|wx.LEFT|wx.RIGHT,2)
+		outer.Add((0,20))
+		rtc_counts=wx.richtext.RichTextCtrl(popup,style=wx.TE_READONLY|wx.NO_BORDER)
+		rtc_counts.SetBackgroundColour(bg)
+		rtc_counts.SetEditable(False)
+		self._render_body(rtc_counts,counts,threshold)
+		outer.Add(rtc_counts,1,wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM,1)
+		popup.SetSizer(outer)
+		popup.SetSize(popup_w,popup_h)
+		def on_apply(evt):
+			t=spin.GetValue()
+			self._sorted_count_threshold=t
+			self._render_legend(rtc_leg,t)
+			self._render_body(rtc_counts,counts,t)
+		btn.Bind(wx.EVT_BUTTON,on_apply)
+		frame=self.GetTopLevelParent()
+		fr=frame.GetRect()
+		popup.SetPosition(wx.Point(fr.x+(fr.width-popup_w)//2,fr.y+(fr.height-popup_h)//2))
+		popup.Popup()
+
+
 	def select_filepath(self,event):
 
 		dialog=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
 		if dialog.ShowModal()==wx.ID_OK:
 			self.file_path=dialog.GetPath()
 			self.text_inputexamples.SetLabel('Path to sorted behavior examples: '+self.file_path+'.')
+			self._update_sorted_count_display(self.file_path)
 		dialog.Destroy()
 
 
@@ -1467,6 +1741,9 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 					else:
 						self.text_trainingfolder.SetLabel('Pattern images w/o bodyparts in: '+self.data_path+'.')
 
+		if self.data_path is not None:
+			self._update_count_display(self.data_path)
+
 
 	def specify_augmentation(self,event):
 
@@ -1625,6 +1902,7 @@ class PanelLv2_TestCategorizers(wx.Panel):
 
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
+		add_info_button(self, boxsizer, INFO_COLOUR_S3)
 
 		module_selectcategorizer=wx.BoxSizer(wx.HORIZONTAL)
 		button_selectcategorizer=wx.Button(panel,label='Select a Categorizer\nto test',size=(300,40))

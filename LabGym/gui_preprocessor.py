@@ -32,9 +32,11 @@ import cv2
 import numpy as np
 from PIL import Image,ImageEnhance
 import wx
+import wx.lib.agw.hyperlink as hl
 
 # Local application/library specific imports.
 from .tools import preprocess_video
+from .gui_utils import add_info_button, INFO_COLOUR_S1
 
 
 class PanelLv2_ProcessVideos(wx.Panel):
@@ -71,6 +73,7 @@ class PanelLv2_ProcessVideos(wx.Panel):
 
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
+		add_info_button(self, boxsizer, INFO_COLOUR_S1)
 
 		module_inputvideos=wx.BoxSizer(wx.HORIZONTAL)
 		button_inputvideos=wx.Button(panel,label='Select the video(s)\nfor preprocessing',size=(300,40))
@@ -139,6 +142,13 @@ class PanelLv2_ProcessVideos(wx.Panel):
 		boxsizer.Add(0,5,0)
 		boxsizer.Add(button_preprocessvideos,0,wx.RIGHT|wx.ALIGN_RIGHT,90)
 		boxsizer.Add(0,10,0)
+
+		bottom_row = wx.BoxSizer(wx.HORIZONTAL)
+		link = hl.HyperLinkCtrl(panel, 0, 'Preprocessing Basics Tutorial Video', URL='https://youtu.be/51F-whqGIzU?si=IYMT3_etdnu46Zh3')
+		bottom_row.Add(link, 0, wx.LEFT, 10)
+		bottom_row.AddStretchSpacer()
+		boxsizer.Add(bottom_row, 0, wx.EXPAND)
+		boxsizer.Add(0, 10, 0)
 
 		panel.SetSizer(boxsizer)
 
@@ -442,6 +452,7 @@ class PanelLv2_DrawMarkers(wx.Panel):
 
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
+		add_info_button(self, boxsizer, INFO_COLOUR_S1)
 
 		module_inputvideos=wx.BoxSizer(wx.HORIZONTAL)
 		button_inputvideos=wx.Button(panel,label='Select the video(s)\nfor marker drawing',size=(300,40))
@@ -470,6 +481,13 @@ class PanelLv2_DrawMarkers(wx.Panel):
 		boxsizer.Add(0,5,0)
 		boxsizer.Add(button_preprocessvideos,0,wx.RIGHT|wx.ALIGN_RIGHT,90)
 		boxsizer.Add(0,10,0)
+
+		bottom_row = wx.BoxSizer(wx.HORIZONTAL)
+		link = hl.HyperLinkCtrl(panel, 0, 'Preprocessing Basics: Drawing Markers Tutorial Video', URL='https://youtu.be/8Y9RQUGuPtk?si=3jPVZCddf62o2EUB')
+		bottom_row.Add(link, 0, wx.LEFT, 10)
+		bottom_row.AddStretchSpacer()
+		boxsizer.Add(bottom_row, 0, wx.EXPAND)
+		boxsizer.Add(0, 10, 0)
 
 		panel.SetSizer(boxsizer)
 
