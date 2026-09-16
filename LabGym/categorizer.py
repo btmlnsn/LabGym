@@ -66,7 +66,7 @@ from keras.utils import (
 	)
 
 # Local application/library specific imports.
-# (none)
+from LabGym import variant_banner
 
 
 matplotlib.use('Agg')
@@ -226,6 +226,8 @@ class DatasetFromPath(Sequence):
 class Categorizers():
 
 	def __init__(self):
+
+		print(variant_banner())
 
 		self.extension_image=('.png','.PNG','.jpeg','.JPEG','.jpg','.JPG','.tiff','.TIFF','.bmp','.BMP') # the image formats that LabGym can accept
 		self.extension_video=('.avi','.mpg','.wmv','.mp4','.mkv','.m4v','.mov') # the video formats that LabGym can accept

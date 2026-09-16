@@ -43,7 +43,7 @@ logger.debug('importing %s ...', '.analyzebehavior_dt')
 from .analyzebehavior_dt import AnalyzeAnimalDetector
 logger.debug('importing %s done', '.analyzebehavior_dt')
 from .categorizer import Categorizers
-from LabGym import config
+from LabGym import config, VARIANT, __version__
 from .tools import sort_examples_from_csv
 from .gui_utils import add_or_select_notebook_page
 
@@ -1113,6 +1113,11 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
 
+		self.text_variant=wx.StaticText(panel,label=f'LabGym {__version__} [{VARIANT}] — not the default {__version__} training behavior\nCategorizer training is hard-capped at 5 epochs.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
+		boxsizer.Add(0,10,0)
+		boxsizer.Add(self.text_variant,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(0,10,0)
+
 		module_inputexamples=wx.BoxSizer(wx.HORIZONTAL)
 		button_inputexamples=wx.Button(panel,label='Select the folder that stores\nthe sorted behavior examples',size=(300,40))
 		button_inputexamples.Bind(wx.EVT_BUTTON,self.select_filepath)
@@ -1201,9 +1206,9 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 		boxsizer.Add(module_report,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		boxsizer.Add(0,5,0)
 
-		button_train=wx.Button(panel,label='Train the Categorizer',size=(300,40))
+		button_train=wx.Button(panel,label='Train the Categorizer (5-epoch cap)',size=(300,40))
 		button_train.Bind(wx.EVT_BUTTON,self.train_categorizer)
-		wx.Button.SetToolTip(button_train,'Need to name the Categorizer to train. English letters, numbers, underscore “_”, or hyphen “-” are acceptable but do not use special characters such as “@” or “^”.')
+		wx.Button.SetToolTip(button_train,f'This is the {VARIANT} build of LabGym {__version__}. Categorizer training is hard-capped at 5 epochs. Need to name the Categorizer to train. English letters, numbers, underscore “_”, or hyphen “-” are acceptable but do not use special characters such as “@” or “^”.')
 		boxsizer.Add(button_train,0,wx.RIGHT|wx.ALIGN_RIGHT,90)
 		boxsizer.Add(0,10,0)
 

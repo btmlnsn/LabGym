@@ -53,7 +53,7 @@ import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
 # pylint: disable=ungrouped-imports
 # pylint: disable-next=unused-import
 from LabGym import mypkg_resources  # replace deprecated pkg_resources
-from LabGym import __version__, gui_main, probes
+from LabGym import __version__, VARIANT, gui_main, probes, variant_banner
 from LabGym import config, selftest
 
 
@@ -62,6 +62,10 @@ logger.debug('%s: %r', '(__name__, __package__)', (__name__, __package__))
 
 def main() -> None:
 	"""Perform some pre-op probing, then display the main window."""
+
+	banner = variant_banner()
+	print(banner)
+	logger.info(banner)
 
 	# Get all of the values needed from config.get_config().
 	flag_selftest: bool = config.get_config()['selftest']
@@ -89,7 +93,7 @@ def main() -> None:
 			else:
 				upgrade_command='python3 -m pip install --upgrade LabGym'
 
-			print(f'You are using LabGym {current_version}, but version {latest_version} is available.')
+			print(f'You are using LabGym {current_version} [{VARIANT}], but version {latest_version} is available.')
 			print(f'Consider upgrading LabGym by using the command "{upgrade_command}".')
 			print('For the details of new changes, check https://github.com/umyelab/LabGym.\n')
 

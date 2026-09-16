@@ -1,11 +1,10 @@
 import logging
-import re
 import sys
 
 import pytest
 
 from LabGym import myargparse
-from LabGym import __version__
+from LabGym import __version__, VARIANT
 from .exitstatus import exitstatus
 
 
@@ -80,7 +79,9 @@ def test_parse_args_help(monkeypatch, capsys):
 		result = myargparse.parse_args()
 
 	# Assert
-	assert re.match('Usage: ', capsys.readouterr().out)
+	out = capsys.readouterr().out
+	assert f'[{VARIANT}]' in out
+	assert 'Usage: ' in out
 	assert exitstatus(e.value) == 0
 
 
@@ -99,7 +100,7 @@ def test_parse_args_version(monkeypatch, capsys):
 		result = myargparse.parse_args()
 
 	# Assert
-	assert capsys.readouterr().out == f'version: {version_with_hash}\n'
+	assert capsys.readouterr().out == f'version: {version_with_hash} [{VARIANT}]\n'
 	assert exitstatus(e.value) == 0
 
 

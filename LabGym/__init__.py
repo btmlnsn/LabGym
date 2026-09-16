@@ -18,3 +18,10 @@ Email: bingye@umich.edu
 
 
 __version__='3.0.1'
+VARIANT='cat-5epoch'
+
+def variant_banner():
+	return (
+		f'LabGym {__version__}  [{VARIANT}]  '
+		'categorizer training hard-capped at 5 epochs'
+		)

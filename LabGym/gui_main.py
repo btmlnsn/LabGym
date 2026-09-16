@@ -34,7 +34,7 @@ import wx.aui
 import wx.lib.agw.hyperlink as hl
 
 # Local application/library specific imports.
-from LabGym import __version__
+from LabGym import __version__, VARIANT
 from .gui_utils import add_or_select_notebook_page
 logger.debug('importing %s ...', '.gui_categorizer')
 from .gui_categorizer import PanelLv2_GenerateExamples,PanelLv2_TrainCategorizers,PanelLv2_SortBehaviors,PanelLv2_TestCategorizers
@@ -61,10 +61,13 @@ class InitialPanel(wx.Panel):
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
 
-		self.text_welcome=wx.StaticText(panel,label='Welcome to LabGym!',style=wx.ALIGN_CENTER|wx.ST_ELLIPSIZE_END)
-		boxsizer.Add(0,60,0)
+		self.text_welcome=wx.StaticText(panel,label=f'Welcome to LabGym [{VARIANT}]!',style=wx.ALIGN_CENTER|wx.ST_ELLIPSIZE_END)
+		self.text_variant=wx.StaticText(panel,label=f'This is the {VARIANT} build of LabGym {__version__}.\nCategorizer training is hard-capped at 5 epochs.',style=wx.ALIGN_CENTER|wx.ST_ELLIPSIZE_END)
+		boxsizer.Add(0,40,0)
 		boxsizer.Add(self.text_welcome,0,wx.LEFT|wx.RIGHT|wx.EXPAND,5)
-		boxsizer.Add(0,60,0)
+		boxsizer.Add(0,10,0)
+		boxsizer.Add(self.text_variant,0,wx.LEFT|wx.RIGHT|wx.EXPAND,5)
+		boxsizer.Add(0,40,0)
 		self.text_developers=wx.StaticText(panel,
 			label='Created by Yujia Hu and Bing Ye\n\nLife Sciences Institute, University of Michigan\n\n\n\nContributor list:\n\nJie Zhou, John Ruckstuhl, Brendon O. Waston, Carrie R. Ferrario, Kelly Goss,\n\nRohan Satapathy, Bobby Tomlinson, Isabelle Baker, M. Victor Struman',style=wx.ALIGN_CENTER|wx.ST_ELLIPSIZE_END)
 		boxsizer.Add(self.text_developers,0,wx.LEFT|wx.RIGHT|wx.EXPAND,5)
@@ -367,7 +370,7 @@ class MainFrame(wx.Frame):
 	"""Main frame and its notebook."""
 
 	def __init__(self):
-		super().__init__(None, title=f'LabGym v{__version__}')
+		super().__init__(None, title=f'LabGym v{__version__} [{VARIANT}]')
 
 		self.SetSize((1000, 600))
 

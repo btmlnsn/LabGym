@@ -27,7 +27,7 @@ from typing import Dict, List, Union
 # (none)
 
 # Local application/library specific imports.
-from LabGym import __version__, pkghash
+from LabGym import __version__, VARIANT, pkghash, variant_banner
 
 
 # result is a dict with keys that are string, and vals that are
@@ -84,7 +84,7 @@ def parse_args() -> ResultType:
 	basename = os.path.basename(cmd)  # basename is used for help msg
 	args = args[1:]  # shift 1
 
-	helpmsg = textwrap.dedent(f"""\
+	helpmsg = variant_banner() + '\n\n' + textwrap.dedent(f"""\
 		Usage: {basename} [options]
 
 		Options:
@@ -177,7 +177,7 @@ def parse_args() -> ResultType:
 		elif arg in ['--version']:
 			# Print version msg to stdout and exit 0.
 			version_with_hash = pkghash.labgym_version_with_hash()
-			print(f'version: {version_with_hash}')
+			print(f'version: {version_with_hash} [{VARIANT}]')
 			sys.exit()
 
 		elif arg == '--':
