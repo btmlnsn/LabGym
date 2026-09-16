@@ -1127,7 +1127,7 @@ class Categorizers():
 				es=EarlyStopping(monitor='val_loss',min_delta=0.001,mode='min',verbose=1,patience=6,restore_best_weights=True)
 				rl=ReduceLROnPlateau(monitor='val_loss',min_delta=0.001,factor=0.2,patience=3,verbose=1,mode='min',min_lr=1e-7)
 
-				H=model.fit(trainX,trainY,batch_size=batch_size,validation_data=(testX_tensor,testY_tensor),epochs=1000000,callbacks=[cp,es,rl])
+				H=model.fit(trainX,trainY,batch_size=batch_size,validation_data=(testX_tensor,testY_tensor),epochs=5,callbacks=[cp,es,rl])
 
 				model.save(model_path)
 				print('Trained Categorizer saved in: '+str(model_path))
@@ -1334,7 +1334,7 @@ class Categorizers():
 				es=EarlyStopping(monitor='val_loss',min_delta=0.001,mode='min',verbose=1,patience=6,restore_best_weights=True)
 				rl=ReduceLROnPlateau(monitor='val_loss',min_delta=0.001,factor=0.2,patience=3,verbose=1,mode='min',min_lr=1e-7)
 
-				H=model.fit(trainX,trainY,batch_size=batch_size,validation_data=(testX_tensor,testY_tensor),epochs=1000000,callbacks=[cp,es,rl])
+				H=model.fit(trainX,trainY,batch_size=batch_size,validation_data=(testX_tensor,testY_tensor),epochs=5,callbacks=[cp,es,rl])
 
 				model.save(model_path)
 				print('Trained Categorizer saved in: '+str(model_path))
@@ -1534,7 +1534,7 @@ class Categorizers():
 				es=EarlyStopping(monitor='val_loss',min_delta=0.001,mode='min',verbose=1,patience=6,restore_best_weights=True)
 				rl=ReduceLROnPlateau(monitor='val_loss',min_delta=0.001,factor=0.2,patience=3,verbose=1,mode='min',min_lr=1e-7)
 
-				H=model.fit([train_animations,train_pattern_images],trainY,batch_size=batch_size,validation_data=([test_animations_tensor,test_pattern_images_tensor],testY_tensor),epochs=1000000,callbacks=[cp,es,rl])
+				H=model.fit([train_animations,train_pattern_images],trainY,batch_size=batch_size,validation_data=([test_animations_tensor,test_pattern_images_tensor],testY_tensor),epochs=5,callbacks=[cp,es,rl])
 
 				model.save(model_path)
 				print('Trained Categorizer saved in: '+str(model_path))
@@ -1685,7 +1685,7 @@ class Categorizers():
 			es=EarlyStopping(monitor='val_loss',min_delta=0.001,mode='min',verbose=1,patience=6,restore_best_weights=True)
 			rl=ReduceLROnPlateau(monitor='val_loss',min_delta=0.001,factor=0.2,patience=3,verbose=1,mode='min',min_lr=1e-7)
 
-			H=model.fit(train_data,validation_data=(validation_data),epochs=1000000,callbacks=[cp,es,rl])
+			H=model.fit(train_data,validation_data=(validation_data),epochs=5,callbacks=[cp,es,rl])
 
 			model.save(model_path)
 			print('Trained Categorizer saved in: '+str(model_path))
@@ -1801,7 +1801,7 @@ class Categorizers():
 			es=EarlyStopping(monitor='val_loss',min_delta=0.001,mode='min',verbose=1,patience=6,restore_best_weights=True)
 			rl=ReduceLROnPlateau(monitor='val_loss',min_delta=0.001,factor=0.2,patience=3,verbose=1,mode='min',min_lr=1e-7)
 
-			H=model.fit(train_data,validation_data=(validation_data),epochs=1000000,callbacks=[cp,es,rl])
+			H=model.fit(train_data,validation_data=(validation_data),epochs=5,callbacks=[cp,es,rl])
 
 			model.save(model_path)
 			print('Trained Categorizer saved in: '+str(model_path))
@@ -1908,7 +1908,7 @@ class Categorizers():
 			es=EarlyStopping(monitor='val_loss',min_delta=0.001,mode='min',verbose=1,patience=6,restore_best_weights=True)
 			rl=ReduceLROnPlateau(monitor='val_loss',min_delta=0.001,factor=0.2,patience=3,verbose=1,mode='min',min_lr=1e-7)
 
-			H=model.fit(train_data,validation_data=(validation_data),epochs=1000000,callbacks=[cp,es,rl])
+			H=model.fit(train_data,validation_data=(validation_data),epochs=5,callbacks=[cp,es,rl])
 
 			model.save(model_path)
 			print('Trained Categorizer saved in: '+str(model_path))
