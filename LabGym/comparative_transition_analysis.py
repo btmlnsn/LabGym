@@ -24,18 +24,36 @@ def _event(value):
 
 def load_recording(folder, group, behaviors, excluded=(), collapse_repeats=True,
                    include_self=False):
-    """Read one per-video all_events.xlsx; return identity-preserving transition rows.
+    """Read all supported probability workbooks from one analyzed-video folder.
 
-    `behaviors` is the complete, ordered categorizer vocabulary, not inferred
-    from observed labels. Excluded states interrupt sequences (never bridge them).
+    Background-subtraction: all_event_probability.xlsx.
+    Detector: {species}_all_event_probability.xlsx (one input per species).
+    Unrelated workbooks, including batch all_events.xlsx, are ignored.
     """
     folder = Path(folder)
-    path = folder / "all_events.xlsx"
-    if not path.is_file():
-        raise FileNotFoundError(f"Expected per-recording input: {path}")
-    if path.name != "all_events.xlsx":
-        raise ValueError("Unsupported input")
-    df = pd.read_excel(path)
+    background = folder / "all_event_probability.xlsx"
+    suffix = "_all_event_probability.xlsx"
+    detector_paths = sorted(
+        p for p in folder.glob("*" + suffix)
+        if p.name != background.name and p.name[:-len(suffix)]
+    )
+    paths = ([(background, None)] if background.is_file() else []) + [
+        (p, p.name[:-len(suffix)]) for p in detector_paths
+    ]
+    if not paths:
+        raise FileNotFoundError(
+            f"No per-video event probability workbook found in {folder}"
+        )
+    frames = []
+    for path, species in paths:
+        df = pd.read_excel(path)
+        frames.append(_load_workbook(df, path, folder, group, species, behaviors,
+                                     excluded, collapse_repeats, include_self))
+    return pd.concat(frames, ignore_index=True)
+
+
+def _load_workbook(df, path, folder, group, species, behaviors, excluded,
+                   collapse_repeats, include_self):
     if "time/ID" not in df.columns:
         raise ValueError(f"Missing time/ID in {path}")
     if not df["time/ID"].is_unique:
@@ -82,8 +100,8 @@ def load_recording(folder, group, behaviors, excluded=(), collapse_repeats=True,
                 if not include_self and a == b:
                     continue
                 count = counts[a,b]
-                rows.append(dict(group=str(group), source_recording=folder.name,
-                                 animal_id=animal_id, source_behavior=a,
+                rows.append(dict(group=str(group), source_recording=str(folder.resolve()),
+                                 species=species, animal_id=animal_id, source_behavior=a,
                                  target_behavior=b, transition_count=count,
                                  outgoing_count=denominator,
                                  transition_probability=(count/denominator
