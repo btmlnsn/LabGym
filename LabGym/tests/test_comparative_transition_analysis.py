@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 from LabGym.comparative_transition_analysis import (
 	build_transition_dataset,  # noqa: F401  -- used by the remaining C1 cases
@@ -17,7 +18,7 @@ def write_result_workbook(parent, folder_name, filename, animals):
 	for example ``"['Walk', 0.9]"`` and ``"['NA', -1]"``.
 	"""
 	folder = Path(parent) / folder_name
-	folder.mkdir(parents=True)
+	folder.mkdir(parents=True, exist_ok=True)
 	sequences = list(animals.values())
 	nrow = len(sequences[0])
 	if any(len(cells) != nrow for cells in sequences):
@@ -75,3 +76,189 @@ def test_na_cell_does_not_link_neighbors(tmp_path):
 #   real per-video workbook is also present.
 # - matching local animal IDs in two recording folders remain distinct by source recording:
 #   the same animal_id in two folders remains two identities, separated by source_recording.
+
+def test_excluded_behavior_breaks_sequence(tmp_path):
+    folder = write_result_workbook(
+        tmp_path, "excluded", "all_event_probability.xlsx",
+        {"0": ["['A', 0.9]", "['C', 0.9]", "['B', 0.9]"]},
+    )
+    result = load_recording(
+        folder, "control", ["A", "B", "C"], excluded=["C"]
+    )
+    assert result["transition_count"].sum() == 0
+    assert set(result["source_behavior"]) == {"A", "B"}
+    assert set(result["target_behavior"]) == {"A", "B"}
+
+
+def test_absent_behavior_has_undefined_probability(tmp_path):
+    folder = write_result_workbook(
+        tmp_path, "absent", "all_event_probability.xlsx",
+        {"0": ["['A', 0.9]", "['B', 0.9]"]},
+    )
+    result = load_recording(folder, "control", ["A", "B", "C"])
+
+    absent = result[result["source_behavior"] == "C"]
+    assert len(absent) == 2
+    assert (absent["transition_count"] == 0).all()
+    assert (absent["outgoing_count"] == 0).all()
+    assert (~absent["probability_defined"].astype(bool)).all()
+    assert absent["transition_probability"].isna().all()
+
+    # Observed zero differs from undefined probability.
+    ac = result[
+        (result["source_behavior"] == "A")
+        & (result["target_behavior"] == "C")
+    ].iloc[0]
+    assert ac["transition_probability"] == 0.0
+    assert bool(ac["probability_defined"])
+
+
+def test_single_bout_animal(tmp_path):
+    folder = write_result_workbook(
+        tmp_path, "single", "all_event_probability.xlsx",
+        {"0": ["['A', 0.9]"] * 4},
+    )
+    result = load_recording(folder, "control", ["A", "B", "C"])
+
+    assert not result.empty
+    assert set(result["animal_id"]) == {"0"}
+    assert result["transition_count"].sum() == 0
+    assert result["transition_probability"].isna().all()
+
+
+def test_incompatible_behavior_sets(tmp_path):
+    first = write_result_workbook(
+        tmp_path, "first", "all_event_probability.xlsx",
+        {"0": ["['A', 0.9]", "['B', 0.9]"]},
+    )
+    second = write_result_workbook(
+        tmp_path, "second", "all_event_probability.xlsx",
+        {"0": ["['B', 0.9]", "['D', 0.9]"]},
+    )
+
+    with pytest.raises(ValueError, match="Incompatible behavior sets"):
+        build_transition_dataset([
+            {
+                "folder": first,
+                "group": "control",
+                "behaviors": ["A", "B", "C"],
+            },
+            {
+                "folder": second,
+                "group": "treated",
+                "behaviors": ["A", "B", "D"],
+            },
+        ])
+
+
+def test_background_workbook_discovery(tmp_path):
+    folder = write_result_workbook(
+        tmp_path, "background", "all_event_probability.xlsx",
+        {"0": ["['A', 0.9]", "['B', 0.8]"]},
+    )
+    result = load_recording(folder, "control", ["A", "B"])
+
+    assert result["transition_count"].sum() == 1
+    assert result["species"].isna().all()
+    assert set(result["source_recording"]) == {str(folder.resolve())}
+
+
+def test_detector_species_workbooks(tmp_path):
+    folder = write_result_workbook(
+        tmp_path, "detector", "mouse_all_event_probability.xlsx",
+        {"0": ["['A', 0.9]", "['B', 0.9]"]},
+    )
+    write_result_workbook(
+        tmp_path, "detector", "fly_all_event_probability.xlsx",
+        {"0": ["['B', 0.9]", "['A', 0.9]"]},
+    )
+
+    result = load_recording(folder, "control", ["A", "B"])
+
+    assert set(result["species"]) == {"mouse", "fly"}
+    assert set(result["animal_id"]) == {"0"}
+    assert result["transition_count"].sum() == 2
+
+    mouse = result[result["species"] == "mouse"]
+    fly = result[result["species"] == "fly"]
+
+    assert mouse.loc[
+        (mouse["source_behavior"] == "A")
+        & (mouse["target_behavior"] == "B"),
+        "transition_count",
+    ].iloc[0] == 1
+
+    assert fly.loc[
+        (fly["source_behavior"] == "B")
+        & (fly["target_behavior"] == "A"),
+        "transition_count",
+    ].iloc[0] == 1
+
+
+def test_batch_all_events_is_ignored(tmp_path):
+    folder = write_result_workbook(
+        tmp_path, "valid", "all_event_probability.xlsx",
+        {"0": ["['A', 0.9]", "['B', 0.9]"]},
+    )
+
+    # Deliberately invalid: loader must never read this file.
+    (folder / "all_events.xlsx").write_bytes(b"not an Excel file")
+
+    result = load_recording(folder, "control", ["A", "B"])
+    assert result["transition_count"].sum() == 1
+
+    batch_only = tmp_path / "batch_only"
+    batch_only.mkdir()
+    (batch_only / "all_events.xlsx").write_bytes(b"not an Excel file")
+
+    with pytest.raises(FileNotFoundError):
+        load_recording(batch_only, "control", ["A", "B"])
+
+
+def test_same_local_id_across_recordings(tmp_path):
+    first = write_result_workbook(
+        tmp_path, "video_01", "all_event_probability.xlsx",
+        {"0": ["['A', 0.9]", "['B', 0.9]"]},
+    )
+    second = write_result_workbook(
+        tmp_path, "video_02", "all_event_probability.xlsx",
+        {"0": ["['B', 0.9]", "['A', 0.9]"]},
+    )
+
+    result = build_transition_dataset([
+        {
+            "folder": first,
+            "group": "control",
+            "behaviors": ["A", "B"],
+        },
+        {
+            "folder": second,
+            "group": "treated",
+            "behaviors": ["A", "B"],
+        },
+    ])
+
+    assert set(result["animal_id"]) == {"0"}
+    assert set(result["source_recording"]) == {
+        str(first.resolve()), str(second.resolve())
+    }
+    assert result["transition_count"].sum() == 2
+
+    identities = result[
+        ["group", "source_recording", "species", "animal_id"]
+    ].drop_duplicates()
+    assert len(identities) == 2
+
+    first_ab = result[
+        (result["source_recording"] == str(first.resolve()))
+        & (result["source_behavior"] == "A")
+        & (result["target_behavior"] == "B")
+    ]
+    second_ba = result[
+        (result["source_recording"] == str(second.resolve()))
+        & (result["source_behavior"] == "B")
+        & (result["target_behavior"] == "A")
+    ]
+
+    assert first_ab.iloc[0]["transition_count"] == 1
+    assert second_ba.iloc[0]["transition_count"] == 1
