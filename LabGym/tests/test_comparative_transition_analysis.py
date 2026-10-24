@@ -4,10 +4,12 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
+import numpy as np
 
 from LabGym.comparative_transition_analysis import (
 	build_transition_dataset,  # noqa: F401  -- used by the remaining C1 cases
 	load_recording,
+    build_per_animal_measurements
 )
 
 
@@ -262,3 +264,70 @@ def test_same_local_id_across_recordings(tmp_path):
 
     assert first_ab.iloc[0]["transition_count"] == 1
     assert second_ba.iloc[0]["transition_count"] == 1
+
+
+
+def recording(tmp_path, name, animals, fps=10, species=None):
+    folder = tmp_path / name
+    folder.mkdir()
+    file = f'{species}_all_event_probability.xlsx' if species else 'all_event_probability.xlsx'
+    pd.DataFrame({'time/ID': np.arange(len(next(iter(animals.values())))) / fps,
+                  **{k: [str([v, 0.9]) for v in values] for k, values in animals.items()}}
+                 ).to_excel(folder / file, index=False)
+    return folder
+
+
+def configs(a, b, **kwargs):
+    return [dict(folder=a, group='control', behaviors=['A','B','C'], **kwargs),
+            dict(folder=b, group='treated', behaviors=['A','B','C'], **kwargs)]
+
+
+def test_bouts_and_switching_rate(tmp_path):
+    a = recording(tmp_path, 'a', {'0':['A','A','B','B','NA','A','C']})
+    b = recording(tmp_path, 'b', {'0':['B','B','B']})
+    t, s, bouts = build_per_animal_measurements(configs(a,b))
+    ta = t[t.source_recording == str(a.resolve())]
+    assert ta.transition_count.sum() == 2
+    assert ta.valid_included_frames.iloc[0] == 6
+    assert ta.switching_rate_per_1000_frames.iloc[0] == pytest.approx(2000/6)
+    aa = s[(s.source_recording == str(a.resolve())) & (s.behavior == 'A')].iloc[0]
+    assert aa.bout_count == 2
+    assert aa.total_bout_frames == 3
+    assert aa.mean_bout_duration_seconds == pytest.approx(.15)
+    assert aa.median_bout_duration_seconds == pytest.approx(.15)
+    assert sorted(bouts[bouts.source_recording == str(a.resolve())].bout_length_frames) == [1,1,2,2]
+
+
+def test_no_pooling_same_local_id(tmp_path):
+    a = recording(tmp_path, 'a', {'0':['A','B'], '1':['A','A']})
+    b = recording(tmp_path, 'b', {'0':['B','A']})
+    t, s, _ = build_per_animal_measurements(configs(a,b))
+    assert len(s[['source_recording','animal_id']].drop_duplicates()) == 3
+    assert t.transition_count.sum() == 2
+    assert s[(s.source_recording == str(a.resolve())) & (s.animal_id == '1')].animal_transition_count.eq(0).all()
+
+
+def test_excluded_and_all_na(tmp_path):
+    a = recording(tmp_path, 'a', {'0':['A','C','B'], '1':['NA','NA','NA']})
+    b = recording(tmp_path, 'b', {'0':['A','B']})
+    t, s, _ = build_per_animal_measurements(configs(a,b, excluded=['C']))
+    ta = t[t.source_recording == str(a.resolve())]
+    assert ta.transition_count.sum() == 0
+    assert s[(s.source_recording == str(a.resolve())) & (s.animal_id == '1')].valid_included_frames.eq(0).all()
+    assert s[(s.source_recording == str(a.resolve())) & (s.animal_id == '1')].switching_rate_per_1000_frames.isna().all()
+
+
+def test_fps_mismatch_rejected(tmp_path):
+    a = recording(tmp_path, 'a', {'0':['A','B']}, fps=10)
+    b = recording(tmp_path, 'b', {'0':['B','A']}, fps=20)
+    with pytest.raises(ValueError, match='Incompatible frame rates'):
+        build_per_animal_measurements(configs(a,b))
+
+
+def test_species_and_export(tmp_path):
+    a = recording(tmp_path, 'a', {'0':['A','B']}, species='mouse')
+    b = recording(tmp_path, 'b', {'0':['B','A']}, species='fly')
+    out = tmp_path / 'output'
+    t, s, bouts = build_per_animal_measurements(configs(a,b), output_folder=out)
+    assert set(t.species) == {'mouse','fly'}
+    assert all((out / n).exists() for n in ('per_animal_transitions.csv','per_animal_behaviors.csv','per_animal_bouts.csv'))
