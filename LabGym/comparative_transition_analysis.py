@@ -158,7 +158,6 @@ import re
 from pathlib import Path
 import numpy as np
 import pandas as pd
-from .comparative_transition_analysis import load_recording, _event
 
 IDENTITY = ['group', 'source_recording', 'species', 'animal_id']
 
@@ -174,28 +173,63 @@ def _workbooks(folder):
 
 
 def _fps(folder, time_index, explicit=None):
+    """Resolve FPS: explicit value, analysis log, or rounded time/ID seconds.
+
+    Timestamp inference requires at least three timestamps and a unique,
+    plausible integer FPS matching centisecond-rounded frame times.
+    """
     if explicit is not None:
-        fps = float(explicit)
-        source = 'explicit'
+        fps, source = float(explicit), 'explicit'
     else:
-        fps = None
-        for path in (Path(folder) / 'Analysis log.txt',):
-            if path.is_file():
-                match = re.search(r'Video\s*fps\s*[:=]\s*([0-9]+(?:\.[0-9]+)?)',
-                                  path.read_text(errors='replace'), re.I)
-                if match:
-                    fps, source = float(match.group(1)), 'Analysis log.txt'
-                    break
+        fps, source = None, None
+        log = Path(folder) / 'Analysis log.txt'
+        if log.is_file():
+            match = re.search(
+                r'Video\s*fps\s*[:=]\s*([0-9]+(?:\.[0-9]+)?)',
+                log.read_text(errors='replace'), re.I
+            )
+            if match:
+                fps, source = float(match.group(1)), 'Analysis log.txt'
+
         if fps is None:
-            numeric = pd.to_numeric(pd.Series(time_index), errors='coerce').to_numpy(dtype=float)
-            diffs = np.diff(numeric)
-            # time/ID must encode seconds to infer fps; frame numbers alone cannot.
-            if len(diffs) == 0 or not np.isfinite(diffs).all() or not (diffs > 0).all():
-                raise ValueError(f'Cannot infer fps from time/ID for {folder}; supply fps explicitly')
-            step = float(np.median(diffs))
-            if not np.allclose(diffs, step, rtol=0.01, atol=1e-8) or step >= 1:
-                raise ValueError(f'Ambiguous time/ID units for {folder}; supply fps explicitly')
-            fps, source = 1 / step, 'time/ID (seconds)'
+            times = pd.to_numeric(
+                pd.Series(time_index), errors='coerce'
+            ).to_numpy(dtype=float)
+            if len(times) < 3 or not np.isfinite(times).all():
+                raise ValueError(
+                    f'Cannot infer fps from time/ID for {folder}; supply fps explicitly'
+                )
+            diffs = np.diff(times)
+            if not (diffs > 0).all():
+                raise ValueError(f'Invalid time/ID for {folder}: non-increasing timestamps')
+            if np.median(diffs) >= 1:
+                raise ValueError(
+                    f'Ambiguous time/ID units for {folder}; supply fps explicitly'
+                )
+
+            # LabGym rounds frame timestamps to hundredths of a second.
+            # Thus 30 fps produces alternating 0.03 and 0.04 second steps.
+            # Fit against all frames, not the individual differences.
+            frame = np.arange(len(times), dtype=float)
+            slope = np.polyfit(frame, times, 1)[0]
+            if not np.isfinite(slope) or slope <= 0:
+                raise ValueError(f'Invalid time/ID for {folder}')
+            candidate = int(round(1.0 / slope))
+            if candidate < 2 or candidate > 100:
+                raise ValueError(
+                    f'Ambiguous time/ID fps for {folder}; supply fps explicitly'
+                )
+
+            # Allow a constant start-time offset and centisecond rounding.
+            # The total drift must remain within one centisecond.
+            offsets = times - frame / candidate
+            if (np.ptp(offsets) > 0.0100001
+                    or abs(slope - 1.0 / candidate) * (len(times) - 1) > 0.0100001):
+                raise ValueError(
+                    f'Ambiguous time/ID fps for {folder}; supply fps explicitly'
+                )
+            fps, source = float(candidate), 'time/ID (centisecond-rounded)'
+
     if not np.isfinite(fps) or fps <= 0:
         raise ValueError('fps must be finite and positive')
     return fps, source
@@ -231,7 +265,8 @@ def build_per_animal_measurements(recordings, output_folder=None,
     """Return (transitions, behaviors, bouts), all tidy per-animal DataFrames.
 
     Recordings follow C1's {folder, group, behaviors, excluded?} contract;
-    optional fps overrides missing/ambiguous metadata. fps_tolerance is relative.
+    optional fps overrides missing/ambiguous metadata. Mixed FPS is allowed.
+    fps_tolerance is retained for backwards compatibility but not enforced.
     """
     recordings = list(recordings)
     if not recordings or len({str(r['group']) for r in recordings}) != 2:
@@ -240,7 +275,7 @@ def build_per_animal_measurements(recordings, output_folder=None,
     excluded = set(recordings[0].get('excluded', ()))
     if fps_tolerance < 0:
         raise ValueError('fps_tolerance must be nonnegative')
-    transitions, behaviors, bout_rows, fps_values = [], [], [], []
+    transitions, behaviors, bout_rows = [], [], []
     seen = set()
     for rec in recordings:
         folder = Path(rec['folder']).resolve()
@@ -261,7 +296,6 @@ def build_per_animal_measurements(recordings, output_folder=None,
         for path, species in workbook_paths:
             df = pd.read_excel(path)
             fps, fps_source = _fps(folder, df['time/ID'], rec.get('fps'))
-            fps_values.append(fps)
             for col in df.columns:
                 if col == 'time/ID':
                     continue
@@ -297,8 +331,6 @@ def build_per_animal_measurements(recordings, output_folder=None,
                                           mean_bout_duration_seconds=float(np.mean(durations)) if lengths else np.nan,
                                           median_bout_duration_seconds=float(np.median(durations)) if lengths else np.nan,
                                           fps=fps, fps_source=fps_source))
-    if fps_values and max(fps_values) / min(fps_values) - 1 > fps_tolerance:
-        raise ValueError('Incompatible frame rates for switching-rate comparison')
     transition_df = pd.concat(transitions, ignore_index=True)
     behavior_df = pd.DataFrame(behaviors)
     bout_df = pd.DataFrame(bout_rows, columns=IDENTITY + ['behavior', 'bout_number',
