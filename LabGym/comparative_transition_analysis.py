@@ -173,10 +173,13 @@ def _workbooks(folder):
 
 
 def _fps(folder, time_index, explicit=None):
-    """Resolve FPS: explicit value, analysis log, or rounded time/ID seconds.
+    """Resolve FPS without guessing from ambiguous rounded timestamps.
 
-    Timestamp inference requires at least three timestamps and a unique,
-    plausible integer FPS matching centisecond-rounded frame times.
+    Priority: explicit fps, Analysis log.txt, then time/ID inference.
+    LabGym time/ID values are rounded to centiseconds. Short (fewer
+    than seven) timestamps are not sufficiently informative for fallback.
+    For longer indexes, accept only one integer FPS whose expected
+    timestamps match all observed values within half a centisecond.
     """
     if explicit is not None:
         fps, source = float(explicit), 'explicit'
@@ -195,40 +198,44 @@ def _fps(folder, time_index, explicit=None):
             times = pd.to_numeric(
                 pd.Series(time_index), errors='coerce'
             ).to_numpy(dtype=float)
-            if len(times) < 3 or not np.isfinite(times).all():
+            if not np.isfinite(times).all() or len(times) < 2:
                 raise ValueError(
-                    f'Cannot infer fps from time/ID for {folder}; supply fps explicitly'
+                    f'Cannot infer fps from time/ID for {folder}; '
+                    'supply explicit fps or a usable Analysis log.txt'
                 )
-            diffs = np.diff(times)
-            if not (diffs > 0).all():
-                raise ValueError(f'Invalid time/ID for {folder}: non-increasing timestamps')
-            if np.median(diffs) >= 1:
+            if not np.all(np.diff(times) > 0):
                 raise ValueError(
-                    f'Ambiguous time/ID units for {folder}; supply fps explicitly'
+                    f'Invalid time/ID for {folder}: duplicate or non-increasing timestamps'
                 )
-
-            # LabGym rounds frame timestamps to hundredths of a second.
-            # Thus 30 fps produces alternating 0.03 and 0.04 second steps.
-            # Fit against all frames, not the individual differences.
-            frame = np.arange(len(times), dtype=float)
-            slope = np.polyfit(frame, times, 1)[0]
-            if not np.isfinite(slope) or slope <= 0:
-                raise ValueError(f'Invalid time/ID for {folder}')
-            candidate = int(round(1.0 / slope))
-            if candidate < 2 or candidate > 100:
+            if np.median(np.diff(times)) >= 1:
                 raise ValueError(
-                    f'Ambiguous time/ID fps for {folder}; supply fps explicitly'
+                    f'Ambiguous time/ID units for {folder}; '
+                    'supply explicit fps or a usable Analysis log.txt'
+                )
+            if len(times) < 7:
+                raise ValueError(
+                    f'Ambiguous short rounded time/ID index ({len(times)} timestamps) '
+                    f'for {folder}; supply explicit fps or a usable Analysis log.txt'
                 )
 
-            # Allow a constant start-time offset and centisecond rounding.
-            # The total drift must remain within one centisecond.
-            offsets = times - frame / candidate
-            if (np.ptp(offsets) > 0.0100001
-                    or abs(slope - 1.0 / candidate) * (len(times) - 1) > 0.0100001):
+            frames = np.arange(len(times), dtype=float)
+            # The first timestamp establishes the time origin. A normal
+            # LabGym index starts at zero; all subsequent timestamps are
+            # centisecond-rounded frame times relative to that origin.
+            start = times[0]
+            matching = []
+            for candidate in range(2, 101):
+                predicted = start + frames / candidate
+                if np.all(np.abs(times - predicted) <= 0.005000001):
+                    matching.append(candidate)
+
+            if len(matching) != 1:
                 raise ValueError(
-                    f'Ambiguous time/ID fps for {folder}; supply fps explicitly'
+                    f'Ambiguous time/ID fps for {folder}: '
+                    f'{len(matching)} matching integer frame rates; '
+                    'supply explicit fps or a usable Analysis log.txt'
                 )
-            fps, source = float(candidate), 'time/ID (centisecond-rounded)'
+            fps, source = float(matching[0]), 'time/ID (centisecond-rounded)'
 
     if not np.isfinite(fps) or fps <= 0:
         raise ValueError('fps must be finite and positive')

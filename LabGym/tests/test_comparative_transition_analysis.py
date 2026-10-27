@@ -7,7 +7,7 @@ import pytest
 import numpy as np
 
 from LabGym.comparative_transition_analysis import (
-	build_transition_dataset,
+	build_transition_dataset,  # noqa: F401  -- used by the remaining C1 cases
 	load_recording,
     build_per_animal_measurements,
 )
@@ -285,7 +285,7 @@ def configs(a, b, **kwargs):
 def test_bouts_and_switching_rate(tmp_path):
     a = recording(tmp_path, 'a', {'0':['A','A','B','B','NA','A','C']})
     b = recording(tmp_path, 'b', {'0':['B','B','B']})
-    t, s, bouts = build_per_animal_measurements(configs(a,b))
+    t, s, bouts = build_per_animal_measurements(configs(a,b, fps=10))
     ta = t[t.source_recording == str(a.resolve())]
     assert ta.transition_count.sum() == 2
     assert ta.valid_included_frames.iloc[0] == 6
@@ -321,10 +321,12 @@ def test_mixed_fps_preserves_both_recordings(tmp_path):
     a = recording(tmp_path, 'a', {'0':['A','A','B','B']}, fps=10)
     b = recording(tmp_path, 'b', {'0':['B','B','A','A']}, fps=20)
     out = tmp_path / 'export'
+    (a / 'Analysis log.txt').write_text('Video fps: 10\n')
+    (b / 'Analysis log.txt').write_text('Video fps: 20\n')
     t, s, bouts = build_per_animal_measurements(configs(a, b), output_folder=out)
     for frame in (t, s, bouts):
         assert set(frame['fps']) == {10.0, 20.0}
-        assert set(frame['fps_source']) == {'time/ID (centisecond-rounded)'}
+        assert set(frame['fps_source']) == {'Analysis log.txt'}
         assert len(set(frame['source_recording'])) == 2
     assert set(pd.read_csv(out / 'per_animal_transitions.csv')['fps']) == {10, 20}
     assert set(pd.read_csv(out / 'per_animal_behaviors.csv')['fps']) == {10, 20}
@@ -394,3 +396,30 @@ def test_analysis_log_fps_preserved(tmp_path):
     for frame in (transitions, behaviors, bouts):
         assert set(frame['fps']) == {10.0}
         assert set(frame['fps_source']) == {'Analysis log.txt'}
+
+
+@pytest.mark.parametrize("length", [3, 4, 5, 6])
+def test_ambiguous_short_rounded_30fps_requires_metadata(tmp_path, length):
+    a = recording(tmp_path, 'a', {'0': ['A'] * length}, fps=30)
+    b = recording(tmp_path, 'b', {'0': ['B'] * length}, fps=30)
+    for folder in (a, b):
+        path = folder / 'all_event_probability.xlsx'
+        df = pd.read_excel(path)
+        df['time/ID'] = np.round(np.arange(length) / 30, 2)
+        df.to_excel(path, index=False)
+    with pytest.raises(ValueError, match='Ambiguous short rounded time/ID'):
+        build_per_animal_measurements(configs(a, b))
+
+
+def test_seven_rounded_30fps_timestamps_resolve(tmp_path):
+    a = recording(tmp_path, 'a', {'0': ['A'] * 7}, fps=30)
+    b = recording(tmp_path, 'b', {'0': ['B'] * 7}, fps=30)
+    for folder in (a, b):
+        path = folder / 'all_event_probability.xlsx'
+        df = pd.read_excel(path)
+        df['time/ID'] = np.round(np.arange(7) / 30, 2)
+        df.to_excel(path, index=False)
+    transitions, behaviors, bouts = build_per_animal_measurements(configs(a, b))
+    for frame in (transitions, behaviors, bouts):
+        assert set(frame['fps']) == {30.0}
+        assert set(frame['fps_source']) == {'time/ID (centisecond-rounded)'}
